@@ -1,0 +1,56 @@
+.appWindow {
+  display: flex;
+  flex-direction: column;
+  flex: 3dvh auto;
+
+  height: 80dvh;
+  width: 85dvw;
+  margin: 1rem;
+  overflow: auto;
+  position: absolute;
+  top: 2.5dvh;
+
+  background-color: #111;
+  border: 0.1em solid #050505;
+  border-radius: 2.4em;
+
+  transition: 200ms ease-in-out;
+}
+
+.appTop {
+  display: grid;
+  grid-template-columns: 10dvh 1fr;
+  grid-template-rows: 1fr;
+  align-items: center;
+
+  height: 3dvh;
+  width: 85dvw;
+
+  background-color: #050505;
+  color: #fafafa;
+  font-size: 1dvh;
+  line-height: 0;
+}
+
+.traffic {
+  display: flex;
+  justify-content: space-evenly;
+
+  height: 3dvh;
+  width: calc(10dvh + 2.5em);
+
+  & > :first-child {
+    margin-left: 2.5em;
+  }
+}
+
+.appCtrl {
+  height: 2dvh;
+  width: 2dvh;
+
+  border-radius: 1dvh;
+}
+
+.red {background-color: red;}
+.yellow {background-color: yellow;}
+.green {background-color: green;}
