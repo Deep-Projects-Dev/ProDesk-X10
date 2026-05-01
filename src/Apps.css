@@ -6,15 +6,18 @@
   height: 80dvh;
   width: 85dvw;
   margin: 1rem;
-  overflow: auto;
+  overflow: hidden;
   position: absolute;
   top: 2.5dvh;
+  z-index: 3;
 
-  background-color: #111;
-  border: 0.1em solid #050505;
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 0.1em solid rgba(5, 5, 5, 0.15);
   border-radius: 2.4em;
 
-  transition: 200ms ease-in-out;
+  transition: 300ms ease-in-out; 
 }
 
 .appTop {
@@ -26,10 +29,19 @@
   height: 3dvh;
   width: 85dvw;
 
-  background-color: #050505;
+  background-color: transparent;
   color: #fafafa;
   font-size: 1dvh;
   line-height: 0;
+  position: relative;
+}
+
+.appName {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  margin-left: calc(42.5dvw - 4dvh - 4.5em)
 }
 
 .traffic {
@@ -54,3 +66,9 @@
 .red {background-color: red;}
 .yellow {background-color: yellow;}
 .green {background-color: green;}
+
+.app {
+  background-color: #0a0a0a;
+  overflow: auto;
+  transition: 200ms;
+}
