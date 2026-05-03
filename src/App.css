@@ -1,4 +1,8 @@
 button {border: none; color: #eee;}
+html, body, h1, h2, h3, h4, h5, h6, p, div, section, aside, article, main, footer, header, button, a {
+  user-select: none;
+  -moz-user-select: none;
+}
 
 #body {
   height: 100%;
@@ -10,6 +14,7 @@ button {border: none; color: #eee;}
   justify-content: center;
 
   background: url('/src/images/leaves-wallpaper-1920x1080-botanical-verdant-25003.jpg') no-repeat;
+  background-size: cover;
   filter: saturate(140%);
   -webkit-filter: saturate(140%);
   color: #eee;
@@ -48,6 +53,7 @@ button {border: none; color: #eee;}
   border-radius: 2.5dvh;
 
   transition: 100ms ease-in-out;
+  position: relative;
 }
 
 .icon:hover:not(:last-child) {
@@ -61,6 +67,30 @@ button {border: none; color: #eee;}
 }
 .icon.icon:has(+ .icon + .icon:hover:not(:last-child)):not(:last-child) {
   transform: scale(106.25%);
+}
+
+.icon::before {
+  content: attr(data-name);
+  position: absolute;
+  height: max-content;
+  width: max-content;
+  padding: 0 0.5em;
+  background-color: #eee;
+  border-radius: 0.5em;
+  opacity: 0;
+  color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(0, 0, 0, 0.5);
+  transition: 100ms ease-in-out;
+  
+  position: absolute;
+  bottom: 7dvh;
+  left: 0;
+  z-index: 10;
+  transform: translate(calc(-25% + 0.5em), 200%);
+}
+.icon:hover::before {
+  opacity: 1;
+  transform: translate(calc(-25% + 0.5em), 0);
 }
 
 
@@ -86,12 +116,21 @@ button {border: none; color: #eee;}
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 
   background: linear-gradient(45deg, #acf, #caf);
   background-clip: text;
   color: transparent;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+.welcome p {
+  bottom: 5dvh;
+  font-size: 5dvh;
+  position: absolute;
+  text-align: center;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.15);
+  font-family: 'OCR A', 'Poppins', 'Century Gothic', monospace;
 }
 
 

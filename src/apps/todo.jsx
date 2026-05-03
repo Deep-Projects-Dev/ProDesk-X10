@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import './todo.css';
+import { useEffect, useRef, useState } from "react";
+import "./todo.css";
 
 const loadStorage = (key, fallback) => {
   try {
@@ -11,21 +11,21 @@ const loadStorage = (key, fallback) => {
 };
 
 const formatDate = (value) => {
-  if (!value) return 'No due date';
+  if (!value) return "No due date";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'No due date';
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  if (Number.isNaN(date.getTime())) return "No due date";
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   const year = date.getFullYear();
   return `${month}-${day}-${year}`;
 };
 
 const formatClock = (seconds) => {
-  const sign = seconds < 0 ? '-' : '';
+  const sign = seconds < 0 ? "-" : "";
   const absSeconds = Math.abs(seconds);
   const minutes = Math.floor(absSeconds / 60);
   const secs = absSeconds % 60;
-  return `${sign}${minutes}:${String(secs).padStart(2, '0')}`;
+  return `${sign}${minutes}:${String(secs).padStart(2, "0")}`;
 };
 
 const formatDuration = (seconds) => {
@@ -54,8 +54,8 @@ const taskPriorityScore = (task) => {
         3,
         Math.max(
           0,
-          Math.floor((Date.now() - createdAt) / (1000 * 60 * 60 * 24))
-        )
+          Math.floor((Date.now() - createdAt) / (1000 * 60 * 60 * 24)),
+        ),
       )
     : 0;
 
@@ -65,7 +65,7 @@ const taskPriorityScore = (task) => {
     if (!Number.isNaN(dueAt)) {
       daysLeft = Math.min(
         15,
-        Math.max(0, Math.ceil((dueAt - Date.now()) / (1000 * 60 * 60 * 24)))
+        Math.max(0, Math.ceil((dueAt - Date.now()) / (1000 * 60 * 60 * 24))),
       );
     }
   }
@@ -74,39 +74,39 @@ const taskPriorityScore = (task) => {
 };
 
 export default function Todo() {
-  const [tasks, setTasks] = useState(() => loadStorage('todoTasks', []));
-  const [filter, setFilter] = useState('Flow');
+  const [tasks, setTasks] = useState(() => loadStorage("todoTasks", []));
+  const [filter, setFilter] = useState("Flow");
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState({});
 
   const [newTask, setNewTask] = useState({
-    task: '',
-    description: '',
-    urgency: 'No',
+    task: "",
+    description: "",
+    urgency: "No",
     important: false,
-    dateDue: '',
+    dateDue: "",
   });
 
   const [showDescription, setShowDescription] = useState(false);
 
   const [pomodoro, setPomodoro] = useState(() =>
-    loadStorage('todoPomodoro', {
+    loadStorage("todoPomodoro", {
       activeSession: null,
       isRunning: false,
-      mode: 'work',
+      mode: "work",
       targetSeconds: 3600,
       lastUpdatedAt: new Date().toISOString(),
-    })
+    }),
   );
 
   const timerRef = useRef(null);
 
   useEffect(() => {
-    localStorage.setItem('todoTasks', JSON.stringify(tasks));
+    localStorage.setItem("todoTasks", JSON.stringify(tasks));
   }, [tasks]);
 
   useEffect(() => {
-    localStorage.setItem('todoPomodoro', JSON.stringify(pomodoro));
+    localStorage.setItem("todoPomodoro", JSON.stringify(pomodoro));
   }, [pomodoro]);
 
   useEffect(() => {
@@ -129,11 +129,11 @@ export default function Todo() {
           activeSession: {
             ...prev.activeSession,
             workSeconds:
-              prev.mode === 'work'
+              prev.mode === "work"
                 ? prev.activeSession.workSeconds + delta
                 : prev.activeSession.workSeconds,
             breakSeconds:
-              prev.mode === 'break'
+              prev.mode === "break"
                 ? prev.activeSession.breakSeconds + delta
                 : prev.activeSession.breakSeconds,
           },
@@ -146,21 +146,21 @@ export default function Todo() {
   }, [pomodoro.isRunning]);
 
   const filteredTasks = (() => {
-    if (filter === 'Completed') return tasks.filter((task) => task.completed);
-    if (filter === 'High Priority')
-      return tasks.filter((task) => task.urgency === 'High');
-    if (filter === 'Medium Priority')
-      return tasks.filter((task) => task.urgency === 'Medium');
-    if (filter === 'Low Priority')
-      return tasks.filter((task) => task.urgency === 'Low');
-    if (filter === 'Today')
+    if (filter === "Completed") return tasks.filter((task) => task.completed);
+    if (filter === "High Priority")
+      return tasks.filter((task) => task.urgency === "High");
+    if (filter === "Medium Priority")
+      return tasks.filter((task) => task.urgency === "Medium");
+    if (filter === "Low Priority")
+      return tasks.filter((task) => task.urgency === "Low");
+    if (filter === "Today")
       return tasks.filter(
         (task) =>
           task.dateDue &&
-          new Date(task.dateDue).toDateString() === new Date().toDateString()
+          new Date(task.dateDue).toDateString() === new Date().toDateString(),
       );
 
-    if (filter === 'Flow') {
+    if (filter === "Flow") {
       return tasks
         .filter((task) => !task.completed)
         .sort((a, b) => taskPriorityScore(b) - taskPriorityScore(a))
@@ -175,16 +175,13 @@ export default function Todo() {
     tasks.find((task) => task.id === pomodoro.activeSession?.taskId);
 
   const currentPhaseSeconds = pomodoro.activeSession
-    ? pomodoro.mode === 'work'
+    ? pomodoro.mode === "work"
       ? pomodoro.activeSession.workSeconds
       : pomodoro.activeSession.breakSeconds
     : 0;
 
   const progressPercentage = pomodoro.activeSession
-    ? Math.min(
-        100,
-        (currentPhaseSeconds / pomodoro.targetSeconds) * 100
-      )
+    ? Math.min(100, (currentPhaseSeconds / pomodoro.targetSeconds) * 100)
     : 0;
 
   const handleAddTask = () => {
@@ -197,7 +194,7 @@ export default function Todo() {
       urgency: newTask.urgency,
       important: newTask.important,
       dateCreated: new Date().toISOString(),
-      dateDue: newTask.dateDue || '',
+      dateDue: newTask.dateDue || "",
       completed: false,
       pomodoroHistory: [],
     };
@@ -205,17 +202,17 @@ export default function Todo() {
     setTasks((prev) => [taskEntry, ...prev]);
     setSelectedTaskId(taskEntry.id);
     setNewTask({
-      task: '',
-      description: '',
-      urgency: 'No',
+      task: "",
+      description: "",
+      urgency: "No",
       important: false,
-      dateDue: '',
+      dateDue: "",
     });
     setShowDescription(false);
   };
 
   const handleKeyDown = (event) => {
-    if (event.key === 'Enter') {
+    if (event.key === "Enter") {
       handleAddTask();
     }
   };
@@ -256,17 +253,17 @@ export default function Todo() {
         breakCount: 0,
       },
       isRunning: true,
-      mode: 'work',
+      mode: "work",
       targetSeconds: 3600,
       lastUpdatedAt: new Date().toISOString(),
     });
   };
 
   const startBreak = () => {
-    if (!pomodoro.activeSession || pomodoro.mode !== 'work') return;
+    if (!pomodoro.activeSession || pomodoro.mode !== "work") return;
     setPomodoro((prev) => ({
       ...prev,
-      mode: 'break',
+      mode: "break",
       targetSeconds: 900,
       elapsed: 0,
       lastUpdatedAt: new Date().toISOString(),
@@ -274,10 +271,10 @@ export default function Todo() {
   };
 
   const endBreak = () => {
-    if (!pomodoro.activeSession || pomodoro.mode !== 'break') return;
+    if (!pomodoro.activeSession || pomodoro.mode !== "break") return;
     setPomodoro((prev) => ({
       ...prev,
-      mode: 'work',
+      mode: "work",
       targetSeconds: 3600,
       lastUpdatedAt: new Date().toISOString(),
       activeSession: {
@@ -291,7 +288,7 @@ export default function Todo() {
     if (!pomodoro.activeSession) return;
 
     const finalBreakCount =
-      pomodoro.mode === 'break'
+      pomodoro.mode === "break"
         ? pomodoro.activeSession.breakCount + 1
         : pomodoro.activeSession.breakCount;
 
@@ -311,14 +308,14 @@ export default function Todo() {
               ...task,
               pomodoroHistory: [...(task.pomodoroHistory || []), finalRecord],
             }
-          : task
-      )
+          : task,
+      ),
     );
 
     setPomodoro({
       activeSession: null,
       isRunning: false,
-      mode: 'work',
+      mode: "work",
       targetSeconds: 3600,
       lastUpdatedAt: new Date().toISOString(),
     });
@@ -327,10 +324,8 @@ export default function Todo() {
   const toggleTaskCompletion = (taskId) => {
     setTasks((prev) =>
       prev.map((task) =>
-        task.id === taskId
-          ? { ...task, completed: !task.completed }
-          : task
-      )
+        task.id === taskId ? { ...task, completed: !task.completed } : task,
+      ),
     );
   };
 
@@ -346,27 +341,33 @@ export default function Todo() {
   return (
     <div id="todo">
       <aside id="optPanel">
-        {['Flow', 'All', 'Completed', 'High Priority', 'Medium Priority', 'Low Priority', 'Today'].map(
-          (option) => (
-            <button
-              key={option}
-              className={`option ${filter === option ? 'active' : ''}`}
-              onClick={() => setFilter(option)}
-              type="button"
-            >
-              {option}
-            </button>
-          )
-        )}
+        {[
+          "Flow",
+          "All",
+          "Completed",
+          "High Priority",
+          "Medium Priority",
+          "Low Priority",
+          "Today",
+        ].map((option) => (
+          <button
+            key={option}
+            className={`option ${filter === option ? "active" : ""}`}
+            onClick={() => setFilter(option)}
+            type="button"
+          >
+            {option}
+          </button>
+        ))}
       </aside>
 
       <main id="tasks">
         <section className="task-header">
           <div>
-            <h2>Focus Flow</h2>
+            <h2>Focus Flow{filter === "Flow" && "   |   Do this now"}</h2>
           </div>
           <div className="task-count">
-            {filteredTasks.length} task{filteredTasks.length === 1 ? '' : 's'}
+            {filteredTasks.length} task{filteredTasks.length === 1 ? "" : "s"}
           </div>
         </section>
 
@@ -387,8 +388,8 @@ export default function Todo() {
               <article
                 key={task.id}
                 className={`task-card ${
-                  selectedTaskId === task.id ? 'selected' : ''
-                } ${task.completed ? 'completed-task' : ''}`}
+                  selectedTaskId === task.id ? "selected" : ""
+                } ${task.completed ? "completed-task" : ""}`}
                 onClick={() => setSelectedTaskId(task.id)}
               >
                 <div className="task-top">
@@ -398,7 +399,9 @@ export default function Todo() {
                     </span>
                     <h3>{task.task}</h3>
                   </div>
-                  <span className={`urgency-tag urgency-${task.urgency.toLowerCase()}`}>
+                  <span
+                    className={`urgency-tag urgency-${task.urgency.toLowerCase()}`}
+                  >
                     {task.urgency}
                   </span>
                 </div>
@@ -423,7 +426,7 @@ export default function Todo() {
                     }}
                     disabled={disableStart}
                   >
-                    {isRunning ? 'Running' : 'Start'}
+                    {isRunning ? "Running" : "Start"}
                   </button>
                   <button
                     className="button secondary"
@@ -433,7 +436,7 @@ export default function Todo() {
                       toggleTaskCompletion(task.id);
                     }}
                   >
-                    {task.completed ? 'Uncheck' : 'Complete'}
+                    {task.completed ? "Uncheck" : "Complete"}
                   </button>
                   <button
                     className="button danger"
@@ -449,11 +452,11 @@ export default function Todo() {
 
                 {detailsOpen[task.id] && (
                   <div className="task-details">
-                    <p>{task.description || 'No description'}</p>
+                    <p>{task.description || "No description"}</p>
                     <div className="task-details-meta">
                       <span>Due: {formatDate(task.dateDue)}</span>
                       <span>Created: {formatDate(task.dateCreated)}</span>
-                      <span>Important: {task.important ? 'Yes' : 'No'}</span>
+                      <span>Important: {task.important ? "Yes" : "No"}</span>
                     </div>
                   </div>
                 )}
@@ -499,7 +502,7 @@ export default function Todo() {
               className="small-button"
               onClick={() => setShowDescription(!showDescription)}
             >
-              Desc
+              Description
             </button>
           </div>
           {showDescription && (
@@ -540,19 +543,19 @@ export default function Todo() {
           <p>
             {currentTask
               ? `Selected: ${currentTask.task}`
-              : 'Select a task to start a session.'}
+              : "Select a task to start a session."}
           </p>
         </div>
 
         <div className="timer-card">
           <div className="timer-status">
-            <span>{pomodoro.mode === 'work' ? 'Work session' : 'Short break'}</span>
-            <span>{pomodoro.isRunning ? 'Running' : 'Paused'}</span>
+            <span>
+              {pomodoro.mode === "work" ? "Work session" : "Short break"}
+            </span>
+            <span>{pomodoro.isRunning ? "Running" : "Paused"}</span>
           </div>
 
-          <div className="timer-value">
-            {formatClock(currentPhaseSeconds)}
-          </div>
+          <div className="timer-value">{formatClock(currentPhaseSeconds)}</div>
 
           <div className="progress-bar">
             <div
@@ -563,10 +566,13 @@ export default function Todo() {
 
           <div className="timer-footer">
             <span>
-              Target: {pomodoro.targetSeconds === 3600 ? '60:00' : '15:00'}
+              Target: {pomodoro.targetSeconds === 3600 ? "60:00" : "15:00"}
             </span>
             {currentPhaseSeconds > pomodoro.targetSeconds && (
-              <span>Overtime: {formatClock(currentPhaseSeconds - pomodoro.targetSeconds)}</span>
+              <span>
+                Overtime:{" "}
+                {formatClock(currentPhaseSeconds - pomodoro.targetSeconds)}
+              </span>
             )}
           </div>
 
@@ -582,7 +588,7 @@ export default function Todo() {
                   pomodoro.isRunning)
               }
             >
-              {pomodoro.isRunning ? 'Resume' : 'Start'}
+              {pomodoro.isRunning ? "Resume" : "Start"}
             </button>
             <button
               className="button"
@@ -592,7 +598,7 @@ export default function Todo() {
             >
               Stop
             </button>
-            {pomodoro.mode === 'work' ? (
+            {pomodoro.mode === "work" ? (
               <button
                 className="button secondary"
                 type="button"
@@ -616,7 +622,7 @@ export default function Todo() {
           <div className="break-summary">
             <span>Breaks: {pomodoro.activeSession?.breakCount ?? 0}</span>
             <span>
-              Break time:{' '}
+              Break time:{" "}
               {formatDuration(pomodoro.activeSession?.breakSeconds ?? 0)}
             </span>
           </div>

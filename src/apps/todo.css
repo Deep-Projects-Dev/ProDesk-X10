@@ -179,7 +179,7 @@
 }
 
 .task-form {
-  height: 8dvh;
+  height: max-content;
   margin-top: auto;
   display: flex;
   flex-direction: column;
@@ -326,6 +326,7 @@
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
+  overflow: auto;
 }
 
 .overview-top h1 {
