@@ -140,5 +140,5 @@ html, body, h1, h2, h3, h4, h5, h6, p, div, section, aside, article, main, foote
   height: 60dvh;
   width: 60dvw;
 
-  z-index: 5;
+  z-index: 10;
 }

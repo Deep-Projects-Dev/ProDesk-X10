@@ -88,7 +88,7 @@ export default function App() {
       {visible && (
         <div className="welcome" onClick={handleCloseWel} style={{ transform: closing ? 'translateY(-150%)' : 'none' }}>
           <h1>Welcome</h1>
-          <p>ProDesk : cbseX Edition</p>
+          <p>ProDesk cbseX</p>
         </div>
       )}
       
@@ -148,13 +148,10 @@ export default function App() {
         <div className="appTop">
           <div className="traffic">
             <button className="appCtrl red" onClick={() => setOpenSet(false)}></button>
-            <button className="appCtrl yellow" onClick={() => setMinSet(true)}></button>
-            <button className="appCtrl green"></button>
           </div>
           <div className="appName"><h1>Settings</h1></div>
         </div>
         <div className="settings" id="settings">
-          <iframe src="https://ncert.nic.in/textbook.php" frameborder="0"></iframe>
         </div>
       </div>}
 

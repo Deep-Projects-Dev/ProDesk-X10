@@ -1,0 +1,39 @@
+#cal {
+  height: 100%;
+  width: 100%;
+  
+  display: flex;
+
+  background: transparent;
+}
+
+#calPanel {
+  height: 100%;
+  width: 20%;
+  margin-top: 5%;
+
+  & > h1, h2 {
+  line-height: 1em;
+  text-align: end;
+  margin-right: 2%;
+  }
+}
+
+#mainCal {
+  height: 100%;
+  width: 80%;
+
+  display: flex;
+  flex-direction: column;
+}
+#calS {
+  height: 10%;
+  width: 100%;
+}
+#calendar {
+  height: 90%;
+  width: 100%;
+  
+  background: rgba(7, 7, 7, 0.75);
+  border-radius: 2.5em 0 2.5em 0;
+}
