@@ -1,39 +1,149 @@
 #cal {
   height: 100%;
   width: 100%;
-  
   display: flex;
-
-  background: transparent;
+  gap: 1em;
+  padding: 1em;
+  color: white;
+  background: linear-gradient(135deg, rgb(18, 18, 18), rgb(10, 10, 10));
 }
+
+/* ===== PANEL ===== */
 
 #calPanel {
   height: 100%;
   width: 20%;
-  margin-top: 5%;
-
-  & > h1, h2 {
-  line-height: 1em;
-  text-align: end;
-  margin-right: 2%;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
 }
+
+#calPanel > h1,
+#calPanel > h2 {
+  line-height: 1em;
+  text-align: right;
+}
+
+#calPanel > h2 {
+  margin-top: 10%;
+  font-size: 1.2rem;
+  color: rgb(170, 170, 170);
+}
+
+#calPanel > h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+/* ===== TINY CAL ===== */
+
+#tinyCal {
+  flex: 1;
+  padding: 1em;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2em;
+  backdrop-filter: blur(10px);
+}
+
+#tinyCal .fc {
+  font-size: 0.7rem;
+}
+
+#tinyCal .fc-toolbar {
+  display: none;
+}
+
+#tinyCal .fc-daygrid-day-frame {
+  min-height: 2em;
+}
+
+#tinyCal .fc-day-today {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ===== MAIN ===== */
 
 #mainCal {
   height: 100%;
   width: 80%;
-
   display: flex;
   flex-direction: column;
+  gap: 1em;
 }
+
+/* ===== SWITCHES ===== */
+
 #calS {
-  height: 10%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6em;
+}
+
+.calMode {
+  padding: 0.7em 1.2em;
+  border: none;
+  border-radius: 999px;
+  color: white;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
+  transition: 0.2s;
+}
+
+.calMode:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.calMode.active {
+  background: white;
+  color: black;
+}
+
+/* ===== CALENDAR ===== */
+
+#calendar {
+  flex: 1;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2.5em 0 2.5em 0;
+
+  height: 100%;
   width: 100%;
 }
-#calendar {
-  height: 90%;
-  width: 100%;
-  
-  background: rgba(7, 7, 7, 0.75);
-  border-radius: 2.5em 0 2.5em 0;
+
+/* ===== FULLCALENDAR ===== */
+
+.fc {
+  height: 100%;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.fc-col-header-cell-cushion,
+.fc-daygrid-day-number,
+.fc-timegrid-axis-cushion,
+.fc-timegrid-slot-label-cushion {
+  color: white;
+  text-decoration: none;
+}
+
+.fc-timegrid-now-indicator-line {
+  border-color: white;
+}
+
+.fc-event {
+  border: none;
+  padding: 0.2em;
+  border-radius: 1em;
+  background: linear-gradient(135deg, rgb(90, 90, 255), rgb(140, 90, 255));
+}
+
+.fc-day-today {
+  background: rgba(255, 255, 255, 0.03) !important;
 }
