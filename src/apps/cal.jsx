@@ -1,627 +1,838 @@
-import "./cal.css";
+import "./Cal.css";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import FullCalendar from "@fullcalendar/react";
 
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
 
-function toInputValue(date) {
-  const d = new Date(date);
-  const offset = d.getTimezoneOffset() * 60000;
-  return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+const COLOR_OPTIONS = [
+  { name: "Rose", value: "#f6c1c8" },
+  { name: "Peach", value: "#ffd7b2" },
+  { name: "Butter", value: "#f7e59c" },
+  { name: "Mint", value: "#c9efc6" },
+  { name: "Aqua", value: "#bfeef0" },
+  { name: "Sky", value: "#c6dbff" },
+  { name: "Lavender", value: "#e0cdff" },
+  { name: "Pink", value: "#f1c7ef" },
+  { name: "Fog", value: "#d9dee7" },
+  { name: "Sand", value: "#ffe0bf" },
+];
+
+const EMOJI_OPTIONS = ["📅", "📚", "📝", "🧪", "💻", "🎯", "🌙", "⭐", "🎵", "🍀", "🏃", "🎮"];
+
+const WEEK_ZOOM = [
+  { slotDuration: "01:00:00", slotLabelInterval: "02:00:00", slotHeight: "2.2rem" },
+  { slotDuration: "00:30:00", slotLabelInterval: "01:00:00", slotHeight: "2.55rem" },
+  { slotDuration: "00:15:00", slotLabelInterval: "00:30:00", slotHeight: "3.1rem" },
+];
+
+function pad(n) {
+  return String(n).padStart(2, "0");
 }
 
-function toDayValue(date) {
-  const d = new Date(date);
-  const offset = d.getTimezoneOffset() * 60000;
-  return new Date(d.getTime() - offset).toISOString().slice(0, 10);
+function cloneDate(date) {
+  return new Date(date.getTime());
 }
 
-function addMinutes(date, minutes) {
-  const next = new Date(date);
-  next.setMinutes(next.getMinutes() + minutes);
+function addDays(date, days) {
+  const next = cloneDate(date);
+  next.setDate(next.getDate() + days);
   return next;
 }
 
-function startAtNine(date) {
-  const next = new Date(date);
-  next.setHours(9, 0, 0, 0);
+function addHours(date, hours) {
+  const next = cloneDate(date);
+  next.setHours(next.getHours() + hours);
   return next;
 }
 
-function formatRangeTitle(date, view) {
-  if (!date) return "";
-  const d = new Date(date);
+function setTime(date, hours, minutes = 0) {
+  const next = cloneDate(date);
+  next.setHours(hours, minutes, 0, 0);
+  return next;
+}
 
-  if (view === "dayGridMonth") {
-    return d.toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-    });
-  }
+function toDateInputValue(date) {
+  const d = cloneDate(date);
+  const y = d.getFullYear();
+  const m = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  return `${y}-${m}-${day}`;
+}
 
-  if (view === "listWeek") {
-    const start = new Date(d);
-    const end = addMinutes(start, 60 * 24 * 6);
+function toDateTimeInputValue(date) {
+  const d = cloneDate(date);
+  const y = d.getFullYear();
+  const m = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const h = pad(d.getHours());
+  const min = pad(d.getMinutes());
+  return `${y}-${m}-${day}T${h}:${min}`;
+}
 
-    return `${start.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })} – ${end.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })}`;
-  }
+function fromDateTimeInputValue(value) {
+  if (!value) return null;
+  return new Date(value.length === 16 ? `${value}:00` : value);
+}
 
-  return d.toLocaleDateString("en-US", {
+function formatMonthTitle(date) {
+  return date.toLocaleDateString("en-US", {
     month: "long",
-    day: "numeric",
     year: "numeric",
   });
 }
 
-function serializeEvent(event) {
-  return {
-    id: String(event.id),
-    title: event.title || "Untitled",
-    start: event.start ? event.start.toISOString() : "",
-    end: event.end ? event.end.toISOString() : "",
-    notes: event.extendedProps?.notes || "",
-  };
+function formatDayNumber(date) {
+  return pad(date.getDate());
+}
+
+function formatDayName(date) {
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+  });
+}
+
+function formatAgendaHeader(date) {
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function sameDay(a, b) {
+  return toDateInputValue(a) === toDateInputValue(b);
+}
+
+function rangeToDates(start, days) {
+  return Array.from({ length: days }, (_, i) => addDays(start, i));
+}
+
+function defaultEventStartFromSelection(startLike, timed) {
+  const start = new Date(startLike);
+
+  if (timed) return start;
+
+  return setTime(start, 9, 0);
+}
+
+function defaultEventEndFromSelection(start, timed, endLike) {
+  if (!timed) return addHours(start, 1);
+
+  if (endLike) {
+    const end = new Date(endLike);
+
+    if (!Number.isNaN(end.getTime()) && end > start) {
+      return end;
+    }
+  }
+
+  return addHours(start, 1);
 }
 
 export default function Cal() {
-  // ===== REFS =====
-
   const calendarRef = useRef(null);
-  const tinyCalendarRef = useRef(null);
+  const shellRef = useRef(null);
+  const jumpInputRef = useRef(null);
 
-  // ===== DATE =====
+  const [view, setView] = useState("week");
+  const [zoom, setZoom] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const today = new Date();
+  const [focusDate, setFocusDate] = useState(new Date());
+  const [jumpDate, setJumpDate] = useState(toDateInputValue(new Date()));
 
-  // ===== VIEW =====
+  useEffect(() => {
+    setJumpDate(toDateInputValue(focusDate));
+  }, [focusDate]);
 
-  const [view, setView] = useState("timeGridWeek");
-  const [focusDate, setFocusDate] = useState(today);
-  const [jumpDate, setJumpDate] = useState(toDayValue(today));
-  const [rangeTitle, setRangeTitle] = useState(
-    formatRangeTitle(today, "timeGridWeek"),
-  );
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
 
-  // ===== EVENTS =====
+  useEffect(() => {
+    calendarRef.current?.getApi()?.updateSize();
+  }, [view, zoom]);
 
   const [events, setEvents] = useState([
     {
       id: "1",
       title: "Physics",
+      emoji: "🧪",
+      color: "#c6dbff",
       start: "2026-05-06T10:00:00",
       end: "2026-05-06T11:30:00",
-      notes: "",
     },
 
     {
       id: "2",
       title: "Maths",
+      emoji: "📝",
+      color: "#f6c1c8",
       start: "2026-05-07T14:00:00",
       end: "2026-05-07T16:00:00",
-      notes: "",
     },
   ]);
 
-  // ===== MODAL =====
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
-  const [modal, setModal] = useState({
-    open: false,
-    mode: "add",
-    id: "",
+  const [draft, setDraft] = useState({
     title: "",
+    emoji: "📅",
+    color: COLOR_OPTIONS[0].value,
     start: "",
     end: "",
-    notes: "",
   });
 
-  // ===== API =====
+  const currentDay = formatDayNumber(focusDate);
+  const currentDate = formatDayName(focusDate);
+  const monthTitle = formatMonthTitle(focusDate);
 
-  function getApi() {
-    return calendarRef.current?.getApi();
-  }
+  const fcEvents = useMemo(
+    () =>
+      events.map((event) => ({
+        id: event.id,
+        title: event.title,
+        start: event.start,
+        end: event.end,
+        backgroundColor: event.color,
+        borderColor: event.color,
+        textColor: "#161616",
+        extendedProps: {
+          emoji: event.emoji,
+          color: event.color,
+        },
+      })),
+    [events]
+  );
 
-  function getTinyApi() {
-    return tinyCalendarRef.current?.getApi();
-  }
-
-  // ===== SYNC =====
-
-  function syncToDate(date) {
-    const api = getApi();
-    const tinyApi = getTinyApi();
-
-    if (api) {
-      api.gotoDate(date);
-      setRangeTitle(api.view.title);
-    }
-
-    if (tinyApi) {
-      tinyApi.gotoDate(date);
-    }
-
-    const next = new Date(date);
-    setFocusDate(next);
-    setJumpDate(toDayValue(next));
-  }
-
-  // ===== VIEW SWITCH =====
+  const agendaDays = useMemo(() => rangeToDates(focusDate, 14), [focusDate]);
 
   function switchView(nextView) {
-    const api = getApi();
-    if (!api) return;
+    const api = calendarRef.current?.getApi();
 
-    api.changeView(nextView);
-
-    const current = api.getDate();
     setView(nextView);
-    setRangeTitle(api.view.title);
-    setFocusDate(new Date(current));
-    setJumpDate(toDayValue(current));
 
-    const tinyApi = getTinyApi();
-    if (tinyApi) {
-      tinyApi.gotoDate(current);
+    if (nextView !== "agenda") {
+      api?.changeView(nextView === "month" ? "dayGridMonth" : "timeGridWeek");
+      api?.gotoDate(focusDate);
     }
   }
 
-  // ===== NAV =====
+  function goPrev() {
+    const api = calendarRef.current?.getApi();
 
-  function move(dir) {
-    const api = getApi();
-    if (!api) return;
-
-    if (dir === "today") {
-      api.today();
-    } else if (dir === "prev") {
-      api.prev();
-    } else {
-      api.next();
+    if (view !== "agenda") {
+      api?.prev();
     }
 
-    const current = api.getDate();
-    setView(api.view.type);
-    setRangeTitle(api.view.title);
-    setFocusDate(new Date(current));
-    setJumpDate(toDayValue(current));
+    setFocusDate((prev) => addDays(prev, view === "month" ? -1 : -7));
+  }
 
-    const tinyApi = getTinyApi();
-    if (tinyApi) {
-      tinyApi.gotoDate(current);
+  function goNext() {
+    const api = calendarRef.current?.getApi();
+
+    if (view !== "agenda") {
+      api?.next();
+    }
+
+    setFocusDate((prev) => addDays(prev, view === "month" ? 1 : 7));
+  }
+
+  function goToday() {
+    const today = new Date();
+    const api = calendarRef.current?.getApi();
+
+    setFocusDate(today);
+
+    if (view !== "agenda") {
+      api?.today();
+      api?.gotoDate(today);
     }
   }
 
-  // ===== MODAL OPEN =====
+  function goToDate() {
+    if (!jumpDate) return;
 
-  function openAddModal(date) {
-    const start = startAtNine(date || focusDate);
-    const end = addMinutes(start, 60);
+    const next = new Date(`${jumpDate}T12:00:00`);
+    const api = calendarRef.current?.getApi();
 
-    setModal({
-      open: true,
-      mode: "add",
-      id: "",
+    setFocusDate(next);
+
+    if (view !== "agenda") {
+      api?.gotoDate(next);
+    }
+  }
+
+  function openJumpPicker() {
+    const input = jumpInputRef.current;
+
+    if (!input) return;
+
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+
+    input.click();
+  }
+
+  function zoomOut() {
+    setZoom((prev) => Math.max(0, prev - 1));
+  }
+
+  function zoomIn() {
+    setZoom((prev) => Math.min(2, prev + 1));
+  }
+
+  function toggleFullscreen() {
+    const el = shellRef.current;
+
+    if (!el) return;
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+      return;
+    }
+
+    el.requestFullscreen?.();
+  }
+
+  function openCreateModal(startLike, timed = true) {
+    const baseStart = defaultEventStartFromSelection(startLike, timed);
+    const baseEnd = defaultEventEndFromSelection(baseStart, timed);
+
+    setEditingId(null);
+    setDraft({
       title: "",
-      start: toInputValue(start),
-      end: toInputValue(end),
-      notes: "",
+      emoji: "📅",
+      color: COLOR_OPTIONS[0].value,
+      start: toDateTimeInputValue(baseStart),
+      end: toDateTimeInputValue(baseEnd),
     });
+    setShowModal(true);
   }
 
-  function openEditModal(event) {
-    const start = event.start || focusDate;
-    const end = event.end || addMinutes(start, 60);
+  function openEditModal(fullCalendarEvent) {
+    const start = fullCalendarEvent.start || new Date();
+    const end = fullCalendarEvent.end || addHours(start, 1);
+    const color =
+      fullCalendarEvent.extendedProps?.color ||
+      fullCalendarEvent.backgroundColor ||
+      COLOR_OPTIONS[0].value;
 
-    setModal({
-      open: true,
-      mode: "edit",
-      id: String(event.id),
-      title: event.title || "",
-      start: toInputValue(start),
-      end: toInputValue(end),
-      notes: event.extendedProps?.notes || "",
+    setEditingId(fullCalendarEvent.id);
+    setDraft({
+      title: fullCalendarEvent.title || "",
+      emoji: fullCalendarEvent.extendedProps?.emoji || "📅",
+      color,
+      start: toDateTimeInputValue(start),
+      end: toDateTimeInputValue(end),
     });
+    setShowModal(true);
   }
 
-  // ===== CALENDAR ACTIONS =====
-
-  function handleDatesSet(info) {
-    const current = info.view.calendar.getDate();
-
-    setView(info.view.type);
-    setRangeTitle(info.view.title);
-    setFocusDate(new Date(current));
-    setJumpDate(toDayValue(current));
+  function closeModal() {
+    setShowModal(false);
+    setEditingId(null);
   }
-
-  function handleDateClick(info) {
-    if (view === "listWeek") return;
-
-    setFocusDate(info.date);
-    setJumpDate(toDayValue(info.date));
-    openAddModal(info.date);
-  }
-
-  function handleSelect(info) {
-    if (view === "listWeek") return;
-
-    const start = info.start || focusDate;
-    const end = info.end || addMinutes(start, 60);
-
-    setFocusDate(start);
-    setJumpDate(toDayValue(start));
-
-    setModal({
-      open: true,
-      mode: "add",
-      id: "",
-      title: "",
-      start: toInputValue(start),
-      end: toInputValue(end),
-      notes: "",
-    });
-  }
-
-  function handleEventClick(info) {
-    setFocusDate(info.event.start || focusDate);
-    setJumpDate(toDayValue(info.event.start || focusDate));
-    openEditModal(info.event);
-  }
-
-  function handleEventChange(info) {
-    const changed = serializeEvent(info.event);
-
-    setEvents((prev) =>
-      prev.map((item) =>
-        item.id === changed.id ? { ...item, ...changed } : item,
-      ),
-    );
-  }
-
-  // ===== MODAL EDIT =====
 
   function handleSave(e) {
     e.preventDefault();
 
-    const title = modal.title.trim();
-    if (!title) return;
+    const start = fromDateTimeInputValue(draft.start);
+    const end = fromDateTimeInputValue(draft.end) || addHours(start, 1);
 
-    const start = new Date(modal.start);
-    const end = new Date(modal.end || modal.start);
+    if (!start) return;
 
     const nextEvent = {
-      id: modal.id || String(Date.now()),
-      title,
-      start: start.toISOString(),
-      end: end.toISOString(),
-      notes: modal.notes.trim(),
+      id: editingId || String(Date.now()),
+      title: draft.title.trim() || "Untitled",
+      emoji: draft.emoji || "📅",
+      color: draft.color || COLOR_OPTIONS[0].value,
+      start: toDateTimeInputValue(start),
+      end: end > start ? toDateTimeInputValue(end) : toDateTimeInputValue(addHours(start, 1)),
     };
 
-    setEvents((prev) =>
-      modal.mode === "edit"
-        ? prev.map((item) => (item.id === modal.id ? nextEvent : item))
-        : [...prev, nextEvent],
-    );
+    setEvents((prev) => {
+      if (!editingId) return [...prev, nextEvent];
 
-    setModal({
-      open: false,
-      mode: "add",
-      id: "",
-      title: "",
-      start: "",
-      end: "",
-      notes: "",
+      return prev.map((event) =>
+        event.id === editingId ? nextEvent : event
+      );
     });
+
+    closeModal();
   }
 
   function handleDelete() {
-    setEvents((prev) => prev.filter((item) => item.id !== modal.id));
+    if (!editingId) return;
 
-    setModal({
-      open: false,
-      mode: "add",
-      id: "",
-      title: "",
-      start: "",
-      end: "",
-      notes: "",
-    });
+    setEvents((prev) => prev.filter((event) => event.id !== editingId));
+    closeModal();
   }
 
-  function closeModal() {
-    setModal({
-      open: false,
-      mode: "add",
-      id: "",
-      title: "",
-      start: "",
-      end: "",
-      notes: "",
-    });
-  }
-
-  // ===== DAY HEADER =====
-
-  function renderDayHeader(arg) {
-    const d = arg.date;
-
-    return (
-      <div className="dayHead">
-        <span>
-          {d.toLocaleDateString("en-US", {
-            weekday: "short",
-          })}
-        </span>
-
-        <strong>
-          {d.toLocaleDateString("en-US", {
-            month: "numeric",
-            day: "numeric",
-          })}
-        </strong>
-      </div>
+  function syncDraggedEvent(argEvent) {
+    setEvents((prev) =>
+      prev.map((event) =>
+        event.id === argEvent.id
+          ? {
+              ...event,
+              title: argEvent.title,
+              emoji: argEvent.extendedProps?.emoji || event.emoji,
+              color: argEvent.extendedProps?.color || event.color,
+              start: toDateTimeInputValue(argEvent.start || new Date()),
+              end: toDateTimeInputValue(argEvent.end || addHours(argEvent.start || new Date(), 1)),
+            }
+          : event
+      )
     );
   }
 
-  // ===== EVENT UI =====
-
-  function renderEventContent(arg) {
-    return (
-      <div className="eventBubble">
-        <span className="eventTime">{arg.timeText}</span>
-        <span className="eventTitle">{arg.event.title}</span>
-      </div>
-    );
+  function handleSelect(selectInfo) {
+    const timed = selectInfo.startStr.includes("T");
+    openCreateModal(selectInfo.startStr, timed);
+    selectInfo.view.calendar.unselect();
   }
+
+  function handleDateClick(clickInfo) {
+    const timed = clickInfo.view.type !== "dayGridMonth";
+    openCreateModal(clickInfo.date, timed);
+  }
+
+  function handleEventClick(clickInfo) {
+    openEditModal(clickInfo.event);
+  }
+
+  function handleEventDrop(arg) {
+    syncDraggedEvent(arg.event);
+  }
+
+  function handleEventResize(arg) {
+    syncDraggedEvent(arg.event);
+  }
+
+  function handleMiniDateClick(arg) {
+    setFocusDate(arg.date);
+
+    if (view !== "agenda") {
+      calendarRef.current?.getApi()?.gotoDate(arg.date);
+    }
+  }
+
+  function agendaEventsForDay(day) {
+    return events
+      .filter((event) => sameDay(new Date(event.start), day))
+      .sort((a, b) => new Date(a.start) - new Date(b.start));
+  }
+
+  const slotConfig = WEEK_ZOOM[zoom];
 
   return (
     <div id="cal">
+
       {/* ===== LEFT PANEL ===== */}
-
       <div id="calPanel">
-        <div id="calDate">
-          <h1>
-            {focusDate.toLocaleDateString("en-US", {
-              month: "short",
-              day: "2-digit",
-              year: "numeric",
-            })}
-          </h1>
 
-          <h2>
-            {focusDate.toLocaleDateString("en-US", {
-              weekday: "long",
-            })}
-          </h2>
+        <div className="calDateBlock">
+          <h1>{currentDay}</h1>
+          <h2>{currentDate}</h2>
         </div>
 
         <div id="tinyCal">
           <FullCalendar
-            ref={tinyCalendarRef}
+            key={toDateInputValue(focusDate)}
             plugins={[dayGridPlugin]}
             initialView="dayGridMonth"
             initialDate={focusDate}
             headerToolbar={false}
             fixedWeekCount={false}
             showNonCurrentDates={false}
+            selectable={false}
+            editable={false}
+            eventDisplay="none"
+            dateClick={handleMiniDateClick}
             height="100%"
-            dateClick={(info) => syncToDate(info.date)}
           />
         </div>
       </div>
+
 
       {/* ===== MAIN ===== */}
-
       <div id="mainCal">
-        {/* ===== TOP BAR ===== */}
 
-        <div id="calS">
-          <div className="calNavGroup">
-            <button className="calMode tiny" onClick={() => move("prev")}>
-              ‹
-            </button>
-            <button className="calMode" onClick={() => move("today")}>
-              Today
-            </button>
-            <button className="calMode tiny" onClick={() => move("next")}>
-              ›
-            </button>
-          </div>
+        <div id="calTop">
+          <div className="monthTitle">{monthTitle}</div>
 
-          <h3 className="calRange">{rangeTitle}</h3>
-
-          <div className="calNavGroup right">
-            <input
-              className="calJump"
-              type="date"
-              value={jumpDate}
-              onChange={(e) => setJumpDate(e.target.value)}
-            />
-
-            <button className="calMode" onClick={() => syncToDate(jumpDate)}>
-              Go
-            </button>
-            <button
-              className={view === "timeGridWeek" ? "calMode active" : "calMode"}
-              onClick={() => switchView("timeGridWeek")}
-            >
-              Week
-            </button>
-            <button
-              className={view === "dayGridMonth" ? "calMode active" : "calMode"}
-              onClick={() => switchView("dayGridMonth")}
-            >
-              Month
-            </button>
-            <button
-              className={view === "listWeek" ? "calMode active" : "calMode"}
-              onClick={() => switchView("listWeek")}
-            >
-              List
-            </button>
-            <button
-              className="calMode add"
-              onClick={() => openAddModal(focusDate)}
-            >
-              Add
-            </button>
-          </div>
-        </div>
-
-        {/* ===== CALENDAR ===== */}
-
-        <div id="calendar">
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[
-              dayGridPlugin,
-              timeGridPlugin,
-              listPlugin,
-              interactionPlugin,
-            ]}
-            initialView="timeGridWeek"
-            headerToolbar={false}
-            height="100%"
-            allDaySlot={false}
-            nowIndicator={true}
-            editable={view !== "listWeek"}
-            eventStartEditable={view !== "listWeek"}
-            eventDurationEditable={view !== "listWeek"}
-            selectable={view !== "listWeek"}
-            selectMirror={true}
-            longPressDelay={250}
-            eventDragMinDistance={8}
-            slotMinTime="06:00:00"
-            slotMaxTime="22:00:00"
-            expandRows={true}
-            dayMaxEvents={3}
-            titleRangeSeparator=" – "
-            events={events}
-            dayHeaderContent={
-              view === "timeGridWeek" ? renderDayHeader : undefined
-            }
-            eventContent={view === "listWeek" ? undefined : renderEventContent}
-            datesSet={handleDatesSet}
-            dateClick={handleDateClick}
-            select={handleSelect}
-            eventClick={handleEventClick}
-            eventChange={handleEventChange}
-            listDayFormat={{
-              weekday: "short",
-              month: "numeric",
-              day: "numeric",
+          <div
+            className="toolBar"
+            style={{
+              flexWrap: "nowrap",
             }}
-            listDaySideFormat={{ year: "numeric" }}
-          />
-        </div>
-      </div>
+          >
 
-      {/* ===== MODAL ===== */}
-
-      {modal.open && (
-        <div
-          className="calModalBackdrop"
-          onMouseDown={(e) => e.target === e.currentTarget && closeModal()}
-        >
-          <form className="calModal" onSubmit={handleSave}>
-            <div className="calModalTop">
-              <h4>{modal.mode === "edit" ? "Edit event" : "Add event"}</h4>
-
+            <div className="toolGroup navGroup">
+              <button className="toolBtn" type="button" onClick={goPrev}>‹</button>
+              <button className="toolBtn todayBtn" type="button" onClick={goToday}>Today</button>
+              <button className="toolBtn" type="button" onClick={goNext}>›</button>
               <button
+                className="toolBtn"
                 type="button"
-                className="calModalClose"
-                onClick={closeModal}
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Exit full screen" : "Full screen calendar"}
               >
-                ×
+                ⛶
               </button>
             </div>
 
-            <label>
-              Title
+            <div className="toolGroup jumpGroup" style={{ position: "relative" }}>
               <input
-                type="text"
-                value={modal.title}
-                onChange={(e) =>
-                  setModal((prev) => ({ ...prev, title: e.target.value }))
-                }
-                placeholder="Event name"
-                autoFocus
-              />
-            </label>
+                ref={jumpInputRef}
+                className="jumpInput"
+                type="date"
+                value={jumpDate}
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  setJumpDate(nextValue);
 
-            <label>
-              Start
-              <input
-                type="datetime-local"
-                value={modal.start}
-                onChange={(e) =>
-                  setModal((prev) => ({ ...prev, start: e.target.value }))
-                }
-              />
-            </label>
+                  if (!nextValue) return;
 
-            <label>
-              End
-              <input
-                type="datetime-local"
-                value={modal.end}
-                onChange={(e) =>
-                  setModal((prev) => ({ ...prev, end: e.target.value }))
-                }
-              />
-            </label>
+                  const next = new Date(`${nextValue}T12:00:00`);
+                  const api = calendarRef.current?.getApi();
 
-            <label>
-              Notes
-              <textarea
-                value={modal.notes}
-                onChange={(e) =>
-                  setModal((prev) => ({ ...prev, notes: e.target.value }))
-                }
-                placeholder="Optional"
-                rows="3"
-              />
-            </label>
+                  setFocusDate(next);
 
-            <div className="calModalActions">
-              {modal.mode === "edit" && (
-                <button
-                  type="button"
-                  className="calBtn danger"
-                  onClick={handleDelete}
-                >
+                  if (view !== "agenda") {
+                    api?.gotoDate(next);
+                  }
+                }}
+                style={{
+                  position: "absolute",
+                  left: "-9999px",
+                  opacity: 0,
+                  pointerEvents: "none",
+                }}
+              />
+              <button className="toolBtn jumpBtn" type="button" onClick={openJumpPicker}>
+                Jump
+              </button>
+            </div>
+
+            <div className="toolGroup viewGroup">
+              <button
+                className={view === "month" ? "viewBtn active" : "viewBtn"}
+                type="button"
+                onClick={() => switchView("month")}
+              >
+                Month
+              </button>
+              <button
+                className={view === "week" ? "viewBtn active" : "viewBtn"}
+                type="button"
+                onClick={() => switchView("week")}
+              >
+                Week
+              </button>
+              <button
+                className={view === "agenda" ? "viewBtn active" : "viewBtn"}
+                type="button"
+                onClick={() => switchView("agenda")}
+              >
+                Agenda
+              </button>
+            </div>
+
+            <div className="toolGroup navGroup">
+              <button
+                className="toolBtn"
+                type="button"
+                onClick={zoomOut}
+                disabled={view !== "week"}
+                title="Zoom out"
+              >
+                −
+              </button>
+              <button
+                className="toolBtn"
+                type="button"
+                onClick={zoomIn}
+                disabled={view !== "week"}
+                title="Zoom in"
+              >
+                +
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+
+        <div
+          id="calendarShell"
+          ref={shellRef}
+          style={{
+            "--slot-h": view === "week" ? slotConfig.slotHeight : "2.55rem",
+          }}
+        >
+
+          <style>{`
+            #calendarShell .fc .fc-timegrid-slot {
+              height: var(--slot-h, 2.55rem);
+            }
+          `}</style>
+
+          {view !== "agenda" && (
+            <FullCalendar
+              ref={calendarRef}
+              key={`${view}-${zoom}`}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView="timeGridWeek"
+              headerToolbar={false}
+              initialDate={focusDate}
+              height="100%"
+              expandRows={true}
+              firstDay={0}
+              nowIndicator={true}
+              slotMinTime="00:00:00"
+              slotMaxTime="24:00:00"
+              allDaySlot={false}
+              scrollTime="00:00:00"
+              slotDuration={view === "week" ? slotConfig.slotDuration : "00:30:00"}
+              slotLabelInterval={view === "week" ? slotConfig.slotLabelInterval : "01:00:00"}
+              selectable={true}
+              selectMirror={true}
+              editable={true}
+              eventStartEditable={true}
+              eventDurationEditable={true}
+              dayMaxEventRows={4}
+              eventDisplay="block"
+              eventOrder="start,-duration,title"
+              dayHeaderContent={(arg) =>
+                view === "week" ? (
+                  <div className="weekHead">
+                    <span>{arg.date.toLocaleDateString("en-US", { weekday: "short" })}</span>
+                    <strong>{arg.date.getDate()}</strong>
+                  </div>
+                ) : (
+                  <div className="monthHead">{arg.text}</div>
+                )
+              }
+              eventContent={(arg) => {
+                const isMonth = arg.view.type === "dayGridMonth";
+
+                return (
+                  <div className={isMonth ? "eventCard month" : "eventCard"}>
+                    <span className="eventEmoji">{arg.event.extendedProps?.emoji || "📅"}</span>
+                    <div className="eventBody">
+                      {!isMonth && arg.timeText && (
+                        <span className="eventTime">{arg.timeText}</span>
+                      )}
+                      <span className="eventTitle">{arg.event.title}</span>
+                    </div>
+                  </div>
+                );
+              }}
+              events={fcEvents}
+              select={handleSelect}
+              dateClick={handleDateClick}
+              eventClick={handleEventClick}
+              eventDrop={handleEventDrop}
+              eventResize={handleEventResize}
+            />
+          )}
+
+          {view === "agenda" && (
+            <div id="agendaView">
+              {agendaDays.map((day) => {
+                const dayEvents = agendaEventsForDay(day);
+
+                return (
+                  <div className="agendaDay" key={toDateInputValue(day)}>
+                    <button
+                      className="agendaHead"
+                      type="button"
+                      onClick={() => openCreateModal(day, false)}
+                    >
+                      <span>{formatAgendaHeader(day)}</span>
+                      <span className="agendaPlus">+</span>
+                    </button>
+
+                    <div className="agendaList">
+                      {dayEvents.length === 0 && (
+                        <div className="agendaEmpty">No events</div>
+                      )}
+
+                      {dayEvents.map((event) => {
+                        const start = fromDateTimeInputValue(event.start);
+                        const end = fromDateTimeInputValue(event.end) || addHours(start, 1);
+
+                        return (
+                          <button
+                            className="agendaEvent"
+                            key={event.id}
+                            type="button"
+                            style={{ "--accent": event.color }}
+                            onClick={() =>
+                              openEditModal({
+                                id: event.id,
+                                title: event.title,
+                                start,
+                                end,
+                                backgroundColor: event.color,
+                                extendedProps: {
+                                  emoji: event.emoji,
+                                  color: event.color,
+                                },
+                              })
+                            }
+                          >
+                            <span className="agendaEmoji">{event.emoji || "📅"}</span>
+                            <div className="agendaMeta">
+                              <div className="agendaTitleRow">
+                                <span className="agendaTime">
+                                  {formatTime(start)} — {formatTime(end)}
+                                </span>
+                                <span className="agendaColorDot" />
+                              </div>
+                              <span className="agendaTitle">{event.title}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+        </div>
+      </div>
+
+
+      {/* ===== MODAL ===== */}
+      {showModal && (
+        <div id="modalBackdrop" onClick={closeModal}>
+          <form className="modalCard" onClick={(e) => e.stopPropagation()} onSubmit={handleSave}>
+
+            <div className="modalHead">
+              <div>
+                <h3>{editingId ? "Edit event" : "Add event"}</h3>
+                <p>{monthTitle}</p>
+              </div>
+
+              <button className="modalClose" type="button" onClick={closeModal}>×</button>
+            </div>
+
+            <div className="modalGrid">
+              <label className="field">
+                <span>Title</span>
+                <input
+                  className="textInput"
+                  type="text"
+                  value={draft.title}
+                  onChange={(e) =>
+                    setDraft((prev) => ({ ...prev, title: e.target.value }))
+                  }
+                  placeholder="Physics revision"
+                  autoFocus
+                />
+              </label>
+
+              <div className="field">
+                <span>Emoji</span>
+                <div className="emojiGrid">
+                  {EMOJI_OPTIONS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      className={draft.emoji === emoji ? "emojiBtn active" : "emojiBtn"}
+                      type="button"
+                      onClick={() =>
+                        setDraft((prev) => ({ ...prev, emoji }))
+                      }
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="field">
+                <span>Color</span>
+                <div className="swatchGrid">
+                  {COLOR_OPTIONS.map((color) => (
+                    <button
+                      key={color.value}
+                      className={draft.color === color.value ? "swatch active" : "swatch"}
+                      type="button"
+                      title={color.name}
+                      style={{ backgroundColor: color.value }}
+                      onClick={() =>
+                        setDraft((prev) => ({ ...prev, color: color.value }))
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="dateGrid">
+                <label className="field">
+                  <span>Start</span>
+                  <input
+                    className="textInput"
+                    type="datetime-local"
+                    value={draft.start}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, start: e.target.value }))
+                    }
+                  />
+                </label>
+
+                <label className="field">
+                  <span>End</span>
+                  <input
+                    className="textInput"
+                    type="datetime-local"
+                    value={draft.end}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, end: e.target.value }))
+                    }
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="modalActions">
+              {editingId && (
+                <button className="modalBtn danger" type="button" onClick={handleDelete}>
                   Delete
                 </button>
               )}
-
-              <div className="calModalActionsRight">
-                <button
-                  type="button"
-                  className="calBtn ghost"
-                  onClick={closeModal}
-                >
-                  Cancel
-                </button>
-
-                <button type="submit" className="calBtn primary">
-                  Save
-                </button>
-              </div>
+              <button className="modalBtn" type="button" onClick={closeModal}>
+                Cancel
+              </button>
+              <button className="modalBtn primary" type="submit">
+                Save
+              </button>
             </div>
+
           </form>
         </div>
       )}
+
     </div>
   );
 }
