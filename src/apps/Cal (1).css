@@ -54,9 +54,11 @@
   min-height: 0;
   padding: 0.9rem;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border:
+    1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.8rem;
-  background: rgba(255, 255, 255, 0.04);
+  background:
+    rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -173,9 +175,11 @@
   min-height: 0;
   overflow: hidden;
   padding: 0.9rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border:
+    1px solid rgba(255, 255, 255, 0.08);
   border-radius: 2.2rem 0 2.2rem 0;
-  background: rgba(255, 255, 255, 0.04);
+  background:
+    rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -278,11 +282,7 @@
   border: none;
   border-radius: 1rem;
   padding: 0.18rem 0.4rem;
-  background: linear-gradient(
-    135deg,
-    rgba(124, 58, 237, 0.96),
-    rgba(95, 97, 255, 0.96)
-  );
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.96), rgba(95, 97, 255, 0.96));
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
 }
 
