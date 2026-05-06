@@ -282,6 +282,8 @@ export default function Cal() {
 
     if (!input) return;
 
+    input.focus();
+
     if (typeof input.showPicker === "function") {
       input.showPicker();
       return;
@@ -443,10 +445,40 @@ export default function Cal() {
 
   return (
     <div id="cal">
+      <style>{`
+        #tinyCal .fc .fc-daygrid-day-frame {
+          aspect-ratio: 1 / 1;
+          min-height: unset !important;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+        }
+
+        #tinyCal .fc .fc-daygrid-body-balanced .fc-scrollgrid-sync-table,
+        #tinyCal .fc .fc-daygrid-body-unbalanced .fc-scrollgrid-sync-table {
+          table-layout: fixed;
+        }
+
+        #tinyCal .fc .fc-daygrid-day-top {
+          width: 100%;
+          display: flex;
+          justify-content: center;
+        }
+
+        #tinyCal .fc .fc-daygrid-day-number {
+          padding: 0 !important;
+          line-height: 1;
+        }
+
+        #tinyCal .fc .fc-daygrid-day-events,
+        #tinyCal .fc .fc-daygrid-day-bottom {
+          display: none;
+        }
+      `}</style>
 
       {/* ===== LEFT PANEL ===== */}
       <div id="calPanel">
-
         <div className="calDateBlock">
           <h1>{currentDay}</h1>
           <h2>{currentDate}</h2>
@@ -470,10 +502,8 @@ export default function Cal() {
         </div>
       </div>
 
-
       {/* ===== MAIN ===== */}
       <div id="mainCal">
-
         <div id="calTop">
           <div className="monthTitle">{monthTitle}</div>
 
@@ -483,7 +513,6 @@ export default function Cal() {
               flexWrap: "nowrap",
             }}
           >
-
             <div className="toolGroup navGroup">
               <button className="toolBtn" type="button" onClick={goPrev}>‹</button>
               <button className="toolBtn todayBtn" type="button" onClick={goToday}>Today</button>
@@ -521,9 +550,10 @@ export default function Cal() {
                 }}
                 style={{
                   position: "absolute",
-                  left: "-9999px",
+                  width: 0,
+                  height: 0,
                   opacity: 0,
-                  pointerEvents: "none",
+                  overflow: "hidden",
                 }}
               />
               <button className="toolBtn jumpBtn" type="button" onClick={openJumpPicker}>
@@ -575,10 +605,8 @@ export default function Cal() {
                 +
               </button>
             </div>
-
           </div>
         </div>
-
 
         <div
           id="calendarShell"
@@ -587,7 +615,6 @@ export default function Cal() {
             "--slot-h": view === "week" ? slotConfig.slotHeight : "2.55rem",
           }}
         >
-
           <style>{`
             #calendarShell .fc .fc-timegrid-slot {
               height: var(--slot-h, 2.55rem);
@@ -718,16 +745,13 @@ export default function Cal() {
               })}
             </div>
           )}
-
         </div>
       </div>
-
 
       {/* ===== MODAL ===== */}
       {showModal && (
         <div id="modalBackdrop" onClick={closeModal}>
           <form className="modalCard" onClick={(e) => e.stopPropagation()} onSubmit={handleSave}>
-
             <div className="modalHead">
               <div>
                 <h3>{editingId ? "Edit event" : "Add event"}</h3>
@@ -828,11 +852,9 @@ export default function Cal() {
                 Save
               </button>
             </div>
-
           </form>
         </div>
       )}
-
     </div>
   );
 }

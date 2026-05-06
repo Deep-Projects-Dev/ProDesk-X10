@@ -5,7 +5,7 @@
   gap: 1rem;
   padding: 1rem;
   color: #eef2ff;
-  background: transparent;
+  background: rgba(0, 0, 0, 0.15);
   box-sizing: border-box;
 }
 
