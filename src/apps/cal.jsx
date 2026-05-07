@@ -626,7 +626,7 @@ export default function Cal() {
               ref={calendarRef}
               key={`${view}-${zoom}`}
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              initialView="timeGridWeek"
+              initialView={view === "month" ? "dayGridMonth" : "timeGridWeek"}
               headerToolbar={false}
               initialDate={focusDate}
               height="100%"
