@@ -5,14 +5,15 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| >= 1.6.x   | :white_check_mark: |
-| < 1.6.x   | :x:                |
+| >=1.8   | :white_check_mark: Full Support|
+| >= 1.6   | :white_check_mark: |
+| < 1.6   | :x:                |
 
 ## Reporting a Vulnerability
 
 Please use following contacts to get in touch and/or report a vulnerability:
 - Gmail: arshdeepsingh.is.coding@gmail.com
-- Instagram: @being_3.14159265358979383846
+- Instagram: @being_3.14159265358979383846 (prefer)
 
-Expect reply in 24-168 hours. 😜
+Expect reply in 24-168 hours. 😜<br />
 If the vulnerability is accepted, results updates will be made as soon as possible.
