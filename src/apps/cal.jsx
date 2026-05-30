@@ -1,4 +1,4 @@
-import "./Cal.css";
+import "./cal.css";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -444,7 +444,7 @@ export default function Cal() {
   const slotConfig = WEEK_ZOOM[zoom];
 
   return (
-    <div id="cal">
+    <div id="cal" className="app">
       <style>{`
         #tinyCal .fc .fc-daygrid-day-frame {
           aspect-ratio: 1 / 1;

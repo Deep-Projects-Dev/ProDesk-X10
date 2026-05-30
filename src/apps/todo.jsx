@@ -339,7 +339,7 @@ export default function Todo() {
   };
 
   return (
-    <div id="todo">
+    <div id="todo" className="app">
       <aside id="optPanel">
         {[
           "Flow",
@@ -364,7 +364,7 @@ export default function Todo() {
       <main id="tasks">
         <section className="task-header">
           <div>
-            <h2>Focus Flow{filter === "Flow" && "   |   Do this now"}</h2>
+            <h2>{filter === "Flow" ? "Do this now!":filter}</h2>
           </div>
           <div className="task-count">
             {filteredTasks.length} task{filteredTasks.length === 1 ? "" : "s"}

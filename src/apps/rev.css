@@ -1,0 +1,795 @@
+#Rev {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  box-sizing: border-box;
+  color: #eef2ff;
+  background: rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+#Rev *,
+#Rev *::before,
+#Rev *::after {
+  box-sizing: border-box;
+  scrollbar-width: none;
+}
+
+#Rev *::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+#optPanel {
+  width: 18%;
+  min-width: 14rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 2.25rem;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.revSideHead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.25rem 0.2rem 0.4rem;
+}
+
+.revEyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.revSideHead h2 {
+  margin: 0;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.revSideSub {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: rgba(238, 242, 255, 0.72);
+}
+
+.revSideActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.revAddBtn {
+  flex: 1;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(113, 89, 255, 0.42);
+  border-radius: 2.5rem;
+  background: rgba(39, 30, 80, 0.9);
+  color: #f4f0ff;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.revAddBtn:hover {
+  transform: translateY(-1px);
+  background: rgba(54, 39, 111, 0.96);
+  border-color: rgba(142, 112, 255, 0.78);
+}
+
+.revCount {
+  padding: 0.7rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(113, 89, 255, 0.18);
+  color: #d5d2ff;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.revFilterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  overflow: auto;
+  padding-right: 0.1rem;
+}
+
+.option {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid #121212;
+  border-radius: 2.5rem;
+  background: rgba(10, 10, 10, 0.92);
+  color: #d7d8f5;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.option:hover,
+.option.active {
+  background: rgba(34, 34, 68, 0.95);
+  border-color: #7159ff;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+#revMain {
+  width: 57%;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+.revHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0.15rem;
+}
+
+.revTitleBlock {
+  min-width: 0;
+}
+
+.revTitleBlock h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.revTitleBlock p {
+  margin: 0.45rem 0 0;
+  color: rgba(238, 242, 255, 0.72);
+  font-size: 0.95rem;
+}
+
+.revSearchWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 0 0 auto;
+}
+
+.revSearch {
+  width: min(28rem, 38vw);
+  height: 2.6rem;
+  padding: 0 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(10, 10, 16, 0.9);
+  color: #eef2ff;
+  outline: none;
+  font: inherit;
+}
+
+.revSearch::placeholder {
+  color: rgba(238, 242, 255, 0.45);
+}
+
+.revSearch:focus {
+  border-color: rgba(124, 58, 237, 0.6);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.12);
+}
+
+.revGhostBtn,
+.revPrimaryBtn {
+  height: 2.6rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  font: inherit;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.revGhostBtn {
+  background: rgba(10, 10, 16, 0.62);
+  color: rgba(238, 242, 255, 0.9);
+}
+
+.revGhostBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(24, 24, 36, 0.92);
+  border-color: rgba(124, 58, 237, 0.35);
+}
+
+.revGhostBtn:disabled,
+.revPrimaryBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.revGhostBtn.danger {
+  color: #ffb4b4;
+  border-color: rgba(255, 83, 83, 0.25);
+}
+
+.revPrimaryBtn {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+  color: #fff;
+  border-color: rgba(124, 58, 237, 0.2);
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.2);
+}
+
+.revPrimaryBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.revPrimaryBtn.wide {
+  width: 100%;
+}
+
+.revPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 2.3rem;
+  background: rgba(8, 8, 8, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  min-height: 0;
+}
+
+.revFocusPanel {
+  flex: 0 0 auto;
+}
+
+.revQueuePanel {
+  flex: 1;
+  min-height: 0;
+}
+
+.revPanelHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.revPanelHead.side {
+  align-items: flex-start;
+}
+
+.revPanelHead h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.revPanelHead p {
+  margin: 0.35rem 0 0;
+  color: rgba(238, 242, 255, 0.72);
+  font-size: 0.93rem;
+  line-height: 1.35;
+}
+
+.revPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.revPill {
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(113, 89, 255, 0.18);
+  color: #ddd8ff;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.revCardList,
+.revQueueGrid,
+.revHistoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-height: 0;
+}
+
+.revCardList {
+  max-height: 27vh;
+  overflow: auto;
+  padding-right: 0.2rem;
+}
+
+.revQueueGrid {
+  overflow: auto;
+  padding-right: 0.2rem;
+}
+
+.revTopicCard,
+.revQueueCard {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1rem 1rem 0.95rem;
+  border-radius: 1.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(13, 13, 13, 0.94);
+  color: #eef2ff;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.revTopicCard:hover,
+.revQueueCard:hover {
+  transform: translateY(-1px);
+  border-color: rgba(124, 58, 237, 0.35);
+  background: rgba(19, 19, 27, 0.98);
+}
+
+.revTopicCard.selected,
+.revQueueCard.selected {
+  border-color: rgba(124, 58, 237, 0.75);
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.18);
+}
+
+.revTopicTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.revTopicTop h4 {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.2;
+}
+
+.revTopicTop p {
+  margin: 0.35rem 0 0;
+  color: rgba(238, 242, 255, 0.68);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.revBadge {
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  background: rgba(124, 58, 237, 0.15);
+  color: #d9cffd;
+}
+
+.revBadge.state-Overdue {
+  background: rgba(255, 89, 89, 0.14);
+  color: #ffb0b0;
+}
+
+.revBadge.state-Today {
+  background: rgba(255, 184, 45, 0.16);
+  color: #ffe08d;
+}
+
+.revBadge.state-ThisWeek {
+  background: rgba(52, 211, 153, 0.14);
+  color: #bcf6d4;
+}
+
+.revBadge.state-Later {
+  background: rgba(113, 89, 255, 0.16);
+  color: #d9cffd;
+}
+
+.revTopicMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.75rem;
+  color: rgba(238, 242, 255, 0.68);
+  font-size: 0.84rem;
+}
+
+.revEmptyState {
+  padding: 1.3rem;
+  border-radius: 1.7rem;
+  background: rgba(20, 20, 20, 0.92);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  color: rgba(238, 242, 255, 0.78);
+  text-align: center;
+}
+
+.revEmptyState h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.revEmptyState p {
+  margin: 0.45rem 0 0;
+  color: rgba(238, 242, 255, 0.66);
+}
+
+.revEmptyState.small {
+  padding: 1rem;
+}
+
+.revEmptyState.large {
+  height: 100%;
+  display: grid;
+  place-content: center;
+}
+
+.revSessionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  padding: 1rem;
+  border-radius: 1.8rem;
+  background: rgba(12, 12, 18, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.revSessionTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.revSessionTop h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.revSessionTop p {
+  margin: 0.35rem 0 0;
+  color: rgba(238, 242, 255, 0.72);
+}
+
+.revSteps {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.step {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.step.active {
+  background: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+.revSessionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-height: 0;
+}
+
+.revTipBox {
+  padding: 0.95rem 1rem;
+  border-radius: 1.3rem;
+  background: rgba(113, 89, 255, 0.1);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  color: rgba(244, 240, 255, 0.95);
+}
+
+.revTipBox strong {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+}
+
+.revTipBox p {
+  margin: 0;
+  color: rgba(238, 242, 255, 0.8);
+  line-height: 1.45;
+}
+
+.revFieldLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  color: rgba(238, 242, 255, 0.82);
+}
+
+.revTextarea,
+.revInput {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(9, 9, 14, 0.96);
+  color: #eef2ff;
+  border-radius: 1.1rem;
+  outline: none;
+  font: inherit;
+}
+
+.revInput {
+  height: 2.7rem;
+  padding: 0 0.9rem;
+}
+
+.revTextarea {
+  min-height: 9rem;
+  padding: 0.9rem 1rem;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.revTextarea.compact {
+  min-height: 7rem;
+}
+
+.revTextarea:focus,
+.revInput:focus {
+  border-color: rgba(124, 58, 237, 0.6);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.12);
+}
+
+.revSessionActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.revQuestion {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(238, 242, 255, 0.9);
+}
+
+.revRatingRow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.revRatingBtn {
+  padding: 0.85rem 0.55rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 15, 24, 0.98);
+  color: #eef2ff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.revRatingBtn:hover,
+.revRatingBtn.active {
+  transform: translateY(-1px);
+  border-color: rgba(124, 58, 237, 0.45);
+  background: rgba(33, 24, 60, 0.98);
+}
+
+.revRatingBtn span {
+  font-size: 1.25rem;
+}
+
+.revRatingBtn strong {
+  font-size: 0.85rem;
+}
+
+.revDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.revDetailItem {
+  padding: 0.85rem 0.95rem;
+  border-radius: 1.3rem;
+  background: rgba(15, 15, 15, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.revDetailItem span {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  color: rgba(238, 242, 255, 0.64);
+}
+
+.revDetailItem strong {
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.revNoteBlock,
+.revHistoryBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.revNoteHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.revNoteHead h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.revSmallHint {
+  font-size: 0.82rem;
+  color: rgba(238, 242, 255, 0.58);
+}
+
+.revHistoryList {
+  max-height: 33vh;
+  overflow: auto;
+  padding-right: 0.2rem;
+}
+
+.revHistoryItem {
+  padding: 0.9rem 1rem;
+  border-radius: 1.2rem;
+  background: rgba(16, 16, 22, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.revHistoryTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.revHistoryTop strong {
+  font-size: 0.94rem;
+}
+
+.revHistoryTop span {
+  font-size: 0.82rem;
+  color: rgba(238, 242, 255, 0.56);
+}
+
+.revHistoryItem p {
+  margin: 0;
+  color: rgba(238, 242, 255, 0.76);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.revHistoryNote {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: rgba(238, 242, 255, 0.86);
+}
+
+.revHistoryNote p {
+  margin: 0;
+}
+
+.revPrimaryStrip {
+  margin-top: auto;
+}
+
+.revSideButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.revModalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+
+.revModal {
+  width: min(46rem, calc(100vw - 2rem));
+  max-height: min(88vh, 64rem);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.1rem;
+  border-radius: 2rem;
+  background: rgba(8, 8, 12, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #eef2ff;
+}
+
+.revModalHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.revModalHead h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.revModalHead p {
+  margin: 0.35rem 0 0;
+  color: rgba(238, 242, 255, 0.68);
+}
+
+.revModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.revFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+@media (max-width: 1200px) {
+  #Rev {
+    flex-direction: column;
+  }
+
+  #optPanel,
+  #revMain,
+  #revSide {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .revHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .revSearchWrap {
+    width: 100%;
+  }
+
+  .revSearch {
+    width: 100%;
+    flex: 1;
+  }
+
+  .revRatingRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .revFormGrid,
+  .revDetailGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,16 @@
+#guide {
+  height: 100%;
+  width: 100%;
+
+  display: flex;
+  z-index: inherit;
+}
+
+#gRight {
+  height: 100%;
+  width: 80%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

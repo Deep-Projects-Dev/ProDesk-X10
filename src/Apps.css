@@ -3,13 +3,14 @@
   flex-direction: column;
   flex: 3dvh auto;
 
-  height: 80dvh;
-  width: 85dvw;
   margin: 1rem;
   overflow: hidden;
   position: absolute;
   top: 2.5dvh;
   z-index: 3;
+
+  height: 80%;
+  width: 85%;
 
   background-color: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(16px) saturate(140%);
@@ -20,28 +21,37 @@
   transition: 300ms ease-in-out; 
 }
 
+.appWinFull {
+  top: 0;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  border-radius: 0;
+}
+
 .appTop {
   display: grid;
   grid-template-columns: 10dvh 1fr;
   grid-template-rows: 1fr;
   align-items: center;
 
-  height: 3dvh;
-  width: 85dvw;
-
   background-color: transparent;
   color: #fafafa;
   font-size: 1dvh;
   line-height: 0;
   position: relative;
+  
+  z-index: 5;
 }
 
 .appName {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 100%;
-  margin-left: calc(42.5dvw - 4dvh - 4.5em)
+  width: max-content;
+  text-align: center;
+  z-index: 6;
+  pointer-events: none;
 }
 
 .traffic {
@@ -50,6 +60,9 @@
 
   height: 3dvh;
   width: calc(10dvh + 2.5em);
+
+  position: relative;
+  z-index: 7;
 
   & > :first-child {
     margin-left: 2.5em;
@@ -61,6 +74,8 @@
   width: 2dvh;
 
   border-radius: 1dvh;
+  z-index: 8;
+  cursor: pointer;
 }
 
 .red {background-color: red;}
@@ -68,7 +83,10 @@
 .green {background-color: green;}
 
 .app {
-  background-color: #0a0a0a;
-  overflow: auto;
+  overflow: visible;
+  scrollbar-width: none;
   transition: 200ms;
+  
+  color: #eef2ff;
+  background: rgba(0, 0, 0, 0.15);
 }

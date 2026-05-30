@@ -269,18 +269,6 @@ export default function NCERT() {
   const [selectedSubject, setSelectedSubject] = useState(subjects[0]);
   const [selectedBook, setSelectedBook] = useState(subjects[0]?.books[0]);
 
-  // const subjectDownloadUrls = {
-  //   Hindi: "https://ncert.nic.in/textbook.php?jhks1=0-12",
-  //   English: "https://ncert.nic.in/textbook.php?class=10&subject=English",
-  //   Mathematics: "https://ncert.nic.in/textbook.php?class=10&subject=Mathematics",
-  //   Science: "https://ncert.nic.in/textbook.php?class=10&subject=Science",
-  //   "Social Science": "https://ncert.nic.in/textbook.php?class=10&subject=Social+Science",
-  //   "Artificial Intelligence": "https://ncert.nic.in/textbook.php?class=10&subject=Artificial+Intelligence",
-  //   Sanskrit: "https://ncert.nic.in/textbook.php?class=10&subject=Sanskrit",
-  //   "Information Technology": "https://ncert.nic.in/textbook.php?class=10&subject=Information+Technology",
-  //   Agriculture: "https://ncert.nic.in/textbook.php?class=10&subject=Agriculture",
-  // };
-
   const handleDownload = (file, book) => {
     const url = file.downloadUrl || book?.downloadUrl || selectedBook?.chapters[0]?.files[0]?.downloadUrl;
     if (url) {
@@ -292,12 +280,12 @@ export default function NCERT() {
 
   return (
     <div id="NCERT">
-      <aside id="subPanel">
+      <aside id="optPanel">
         <h1>NCERT X</h1>
         {subjects.map((subject) => (
           <button
             key={subject.id}
-            className={`subject ${selectedSubject?.id === subject.id ? "active" : ""}`}
+            className={`option ${selectedSubject?.id === subject.id ? "active" : ""}`}
             onClick={() => {
               setSelectedSubject(subject);
               setSelectedBook(subject.books[0]);
