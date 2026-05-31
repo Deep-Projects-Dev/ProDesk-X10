@@ -7,11 +7,11 @@ const MS_DAY = 24 * 60 * 60 * 1000;
 
 const FILTERS = [
   "Focus",
+  "All",
   "Due Now",
   "Overdue",
   "Today",
   "This Week",
-  "All",
   "Theory",
   "Numerical",
   "Mixed",
@@ -535,24 +535,21 @@ export default function Rev() {
 
       <main id="revMain">
         <header className="revHeader">
-          <div className="revHeaderTop">
-            <h2>{activeFilter}</h2>
-            <div className="revBadges">
-              <span className="revBadge">
-                {activeFilter === "Focus" ? `${readyCount} ready` : `${visibleCount} shown`}
-              </span>
-              <span className="revBadge">{totalCount} total</span>
-            </div>
-          </div>
+          <h2>{activeFilter}</h2>
 
-          <div className="revSearchRow">
-            <input
-              className="revSearch"
-              type="search"
-              placeholder="Search topic, subject, note..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <input
+            className="revSearch"
+            type="search"
+            placeholder="Search topic, subject, note..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        
+          <div className="revBadges">
+            <span className="revBadge">
+              {activeFilter === "Focus" ? `${readyCount} ready` : `${visibleCount} shown`}
+            </span>
+            <span className="revBadge">{totalCount} total</span>
           </div>
         </header>
 
@@ -738,35 +735,19 @@ export default function Rev() {
       <aside id="revSide">
         <section className="detailCard">
           <div className="detailHead">
-            <div>
-              <h3>Topic details</h3>
-              <p>Everything about the selected topic.</p>
-            </div>
+            <h3>Details</h3>
 
-            <div className="detailActions">
-              <button
-                className="detailBtn"
-                type="button"
-                disabled={!selectedTopic}
-                onClick={() => selectedTopic && openEditTopic(selectedTopic)}
-              >
-                Edit
-              </button>
-              <button
-                className="detailBtn danger"
-                type="button"
-                disabled={!selectedTopic}
-                onClick={() => selectedTopic && handleDeleteTopic(selectedTopic.id)}
-              >
-                Delete
-              </button>
-            </div>
+            <button className="detailBtn" type="button" disabled={!selectedTopic}
+              onClick={() => selectedTopic && openEditTopic(selectedTopic)}>Edit</button>
+
+            <button className="detailBtn danger" type="button" disabled={!selectedTopic}
+              onClick={() => selectedTopic && handleDeleteTopic(selectedTopic.id)}>Delete</button>
           </div>
 
           {!selectedTopic ? (
             <div className="detailEmpty">
               <strong>No topic selected.</strong>
-              <span>Add something or click a topic.</span>
+              <span>Select a topic.</span>
             </div>
           ) : (
             <>
@@ -790,18 +771,14 @@ export default function Rev() {
                 <div className="detailStat">
                   <span>Confidence</span>
                   <strong>{Math.round(selectedTopic.confidence ?? 35)}%</strong>
+                  <span>Revisions</span>
+                  <strong>{selectedTopic.history?.length || 0}</strong>
                 </div>
                 <div className="detailStat">
                   <span>Interval</span>
                   <strong>{formatInterval(selectedTopic.intervalDays || 0)}</strong>
-                </div>
-                <div className="detailStat">
                   <span>Next due</span>
                   <strong>{formatDue(selectedTopic.nextDueAt)}</strong>
-                </div>
-                <div className="detailStat">
-                  <span>Revisions</span>
-                  <strong>{selectedTopic.history?.length || 0}</strong>
                 </div>
               </div>
 

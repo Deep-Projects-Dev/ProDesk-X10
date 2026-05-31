@@ -474,10 +474,10 @@ export default function Todo() {
               }
               className="small-select"
             >
-              <option>No</option>
-              <option>High</option>
-              <option>Medium</option>
-              <option>Low</option>
+              <option>No Priority</option>
+              <option>High Priority</option>
+              <option>Medium Priority</option>
+              <option>Low Priority</option>
             </select>
             <label className="small-checkbox">
               <input

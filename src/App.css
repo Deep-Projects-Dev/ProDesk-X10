@@ -23,7 +23,7 @@ html, body, h1, h2, h3, h4, h5, h6, p, div, section, aside, article, main, foote
 
 
 /* Dock */
-#dock {
+.dock {
   height: 9dvh;
   width: 51.375dvh;
   display: flex;
@@ -46,6 +46,19 @@ html, body, h1, h2, h3, h4, h5, h6, p, div, section, aside, article, main, foote
   & > :last-child {
     margin-left: 3dvh;
   }
+}
+
+.dockMax {
+  padding-bottom: 5em;
+  bottom: -8.5em;
+  content-visibility: hidden;
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+.dockMax:hover {
+  bottom: -5em;
+  content-visibility: visible;
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 /* Dock Icons */
@@ -116,7 +129,7 @@ html, body, h1, h2, h3, h4, h5, h6, p, div, section, aside, article, main, foote
   -moz-user-select: none;
   font-family: 'Segoe Script', 'Script';
   transition: 500ms;
-  z-index: 6;
+  z-index: 20;
 
   display: flex;
   align-items: center;

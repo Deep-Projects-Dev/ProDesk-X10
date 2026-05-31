@@ -188,11 +188,9 @@ export default function App() {
 
       
       <div id="dock"
-      className="dock"
+      className={"dock" + (((maxTodo && !minTodo) || (maxCal && !minCal) || (maxRev && !minRev) || (maxNCERT && !minNCERT) || (maxGui && !minGui))? ' dockMax':'')}
       style={{
-        transform: visible? 'translateY(150%)':'none',
-        bottom: ((maxTodo && !minTodo) || (maxCal && !minCal) || (maxRev && !minRev) || (maxNCERT && !minNCERT) || (maxGui && !minGui))? '0':'2.5dvh',
-        height: ((maxTodo && !minTodo) || (maxCal && !minCal) || (maxRev && !minRev) || (maxNCERT && !minNCERT) || (maxGui && !minGui))? '7dvh':'9dvh'
+        transform: visible? 'translateY(150%)':'',
       }}>
         <button className="icon" onClick={() => {setOpenSet(false); setOpenTodo(true); if(!minTodo && ztodo == 4) {setMinTodo(true);} else {setMinTodo(false); zi('t');}}} data-name="Focus Flow">✅</button>
         <button className="icon" onClick={() => {setOpenSet(false); setOpenCal(true); if(!minCal && zcal == 4) {setMinCal(true);} else {setMinCal(false); zi('c');}}} data-name="Calendar">📅</button>

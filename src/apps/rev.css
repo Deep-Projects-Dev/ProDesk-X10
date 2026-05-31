@@ -4,7 +4,7 @@
   width: 100%;
   display: flex;
   gap: 1em;
-  padding: 1em;
+  padding: 0.2em;
   box-sizing: border-box;
   color: #eef2ff;
   background: rgba(0, 0, 0, 0.15);
@@ -25,6 +25,9 @@
   gap: 0.75em;
   padding: 0.75em;
   box-sizing: border-box;
+
+  overflow: auto;
+  scrollbar-width: none;
 }
 
 .revBrand {
@@ -77,23 +80,24 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1em;
+  gap: 0.5em;
+  
+  padding: 0.5em;
+  border-left: 0.1em solid #080808;
+  border-right: 0.1em solid #080808;
+  background: rgba(7, 7, 7, 0.75);
+  border-radius: 2.5em;
 }
 
 .revHeader {
   display: flex;
-  flex-direction: column;
   gap: 0.9rem;
+  
+  align-items: center;
+  justify-content: space-evenly;
 }
 
-.revHeaderTop {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.revHeaderTop h2 {
+.revHeader h2 {
   margin: 0;
   font-size: 2rem;
   line-height: 1;
@@ -103,21 +107,16 @@
 .revBadges {
   display: flex;
   gap: 0.6rem;
-  flex-wrap: wrap;
 }
 
 .revBadge {
+  height: max-content;
+  width: max-content;
   padding: 0.65em 0.95em;
-  border-radius: 999px;
+  border-radius: 2.5em;
   background: rgba(113, 89, 255, 0.18);
   color: #d5d2ff;
   white-space: nowrap;
-}
-
-.revSearchRow {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
 }
 
 .revSearch {
@@ -143,6 +142,8 @@
   flex-direction: column;
   gap: 1rem;
   padding-right: 0.15rem;
+  scrollbar-width: thin;
+  position: relative;
 }
 
 .sessionPanel {
@@ -184,7 +185,7 @@
 .sessionClose {
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 999px;
+  border-radius: 2.5em;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(20, 20, 20, 0.92);
   color: #eef2ff;
@@ -199,7 +200,7 @@
 .sessionDot {
   width: 0.7rem;
   height: 0.7rem;
-  border-radius: 999px;
+  border-radius: 2.5em;
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -313,7 +314,7 @@
 
 .priorityTag {
   padding: 0.35em 0.75em;
-  border-radius: 999px;
+  border-radius: 2.5em;
   font-size: 0.82rem;
   font-weight: 600;
 }
@@ -393,11 +394,14 @@
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: 0.5rem;
+  padding: 0.5rem;
   border-radius: 2.3em;
   background: rgba(15, 15, 15, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.06);
+
+  height: 7em;
+  margin-bottom: 2em;
 }
 
 .revFormTop {
@@ -409,7 +413,7 @@
 .revInput {
   height: 2.85rem;
   padding: 0 0.95rem;
-  border-radius: 999px;
+  border-radius: 2.5em;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(9, 9, 9, 0.95);
   color: #eef2ff;
@@ -425,10 +429,13 @@
   min-width: 5rem;
   padding: 0 1rem;
   border: none;
-  border-radius: 999px;
+  border-radius: 2.5em;
   background: #7c3aed;
   color: #fff;
   cursor: pointer;
+
+  height: 3em;
+  width: 6em;
 }
 
 .revFormMiddle {
@@ -436,7 +443,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .typeGroup,
@@ -446,15 +453,31 @@
   flex-wrap: wrap;
 }
 
+.typeGroup {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 2.5rem;
+  padding: 0.2rem;
+}
+
 .typeBtn,
 .toolBtn {
   padding: 0.62em 0.9em;
-  border-radius: 999px;
+  height: 3em;
+  width: 8em;
+  border-radius: 2.5em;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(18, 18, 30, 0.95);
   color: #eef2ff;
   cursor: pointer;
 }
+
+.toolBtn {width: 6em;}
 
 .typeBtn.active,
 .toolBtn.active {
@@ -468,16 +491,22 @@
 }
 
 .revNote {
-  width: 100%;
-  min-height: 5rem;
-  resize: vertical;
-  padding: 0.85rem 1rem;
+  width: 50%;
+  min-height: 10rem;
+  max-height: max-content;
+  resize: none;
+  padding: 0.7rem 1rem;
   border-radius: 1.4rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(9, 9, 9, 0.95);
   color: #eef2ff;
   outline: none;
   box-sizing: border-box;
+  scrollbar-width: thin;
+  
+  position: absolute;
+  align-self: center;
+  bottom: 10em;
 }
 
 #revSide {
@@ -486,7 +515,10 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.3rem;
+
+  overflow: auto;
+  scrollbar-width: none;
 }
 
 .detailCard,
@@ -500,13 +532,14 @@
 .detailCard {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .detailHead {
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 0.5rem;
 }
 
 .detailHead h3,
@@ -516,20 +549,9 @@
   line-height: 1.1;
 }
 
-.detailHead p {
-  margin: 0.35rem 0 0;
-  color: #aeb1d6;
-}
-
-.detailActions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
 .detailBtn {
   padding: 0.62em 0.95em;
-  border-radius: 999px;
+  border-radius: 2.5em;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(18, 18, 30, 0.95);
   color: #eef2ff;
@@ -577,22 +599,25 @@
 
 .detailPills {
   display: flex;
-  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
 .detailPill {
-  padding: 0.5em 0.8em;
-  border-radius: 999px;
+  height: max-content;
   background: rgba(113, 89, 255, 0.16);
   color: #d7d4ff;
 }
 
+.detailPill, .detailStart {
+  height: max-content;
+  width: max-content;
+  padding: 0.5em 0.8em;
+  border-radius: 2.5rem;
+}
+
 .detailStart {
   width: fit-content;
-  padding: 0.75em 1em;
   border: none;
-  border-radius: 999px;
   background: #7c3aed;
   color: #fff;
   cursor: pointer;
@@ -615,11 +640,11 @@
 
 .detailStat span {
   color: rgba(182, 185, 220, 0.88);
-  font-size: 0.92rem;
+  font-size: 0.8rem;
 }
 
 .detailStat strong {
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .detailNote {
@@ -629,17 +654,19 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  max-height: 5rem;
 }
 
 .detailNote span {
   color: rgba(182, 185, 220, 0.88);
-  font-size: 0.92rem;
+  font-size: 0.8rem;
 }
 
 .detailNote p {
   margin: 0;
   line-height: 1.5;
   color: #eef2ff;
+  overflow: auto;
 }
 
 .historyCard {
@@ -647,8 +674,9 @@
   flex-direction: column;
   gap: 0.8rem;
   flex: 1;
-  min-height: 0;
+  min-height: 10em;
   overflow: hidden;
+  margin-bottom: 1em;
 }
 
 .historyEmpty {
@@ -663,6 +691,7 @@
   gap: 0.7rem;
   overflow: auto;
   padding-right: 0.1rem;
+  scrollbar-width: thin;
 }
 
 .historyItem {
