@@ -1,10 +1,11 @@
+// rev.jsx
 import { useEffect, useMemo, useState } from "react";
 import "./rev.css";
 
 const STORAGE_KEY = "revTopics";
-const DAY = 24 * 60 * 60 * 1000;
+const MS_DAY = 24 * 60 * 60 * 1000;
 
-const SECTIONS = [
+const FILTERS = [
   "Focus",
   "Due Now",
   "Overdue",
@@ -16,170 +17,80 @@ const SECTIONS = [
   "Mixed",
 ];
 
-const SUBJECTS = ["Maths", "Science", "SST", "English", "Other"];
-const TYPES = ["Theory", "Numerical", "Mixed"];
-const DIFFICULTIES = ["Easy", "Medium", "Hard"];
+const TYPE_OPTIONS = ["Theory", "Numerical", "Mixed"];
 
 const RATINGS = [
-  { value: 1, label: "Forgot", emoji: "😭" },
-  { value: 2, label: "Hard", emoji: "😵" },
-  { value: 3, label: "Okay", emoji: "😐" },
-  { value: 4, label: "Easy", emoji: "🙂" },
-  { value: 5, label: "Perfect", emoji: "😎" },
+  { label: "Forgot", value: 0, emoji: "😭", delta: -18, interval: 0.5 },
+  { label: "Hard", value: 1, emoji: "😣", delta: -8, interval: 1 },
+  { label: "Medium", value: 2, emoji: "😐", delta: 0, interval: 2 },
+  { label: "Easy", value: 3, emoji: "🙂", delta: 8, interval: 4 },
+  { label: "Perfect", value: 4, emoji: "😎", delta: 12, interval: 7 },
 ];
 
-const NEW_TOPIC = {
-  title: "",
-  subject: "Maths",
+const EMPTY_FORM = {
+  topic: "",
+  subject: "",
   type: "Theory",
-  difficulty: "Medium",
   note: "",
 };
 
 function makeId() {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return String(Date.now() + Math.random());
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-function addDays(date, days) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function startOfDay(date) {
-  const next = new Date(date);
-  next.setHours(0, 0, 0, 0);
-  return next;
-}
-
-function diffDays(a, b) {
-  return Math.floor((startOfDay(a) - startOfDay(b)) / DAY);
-}
-
-function parseDate(value) {
+function safeDate(value) {
   if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function formatDate(value) {
-  const date = parseDate(value);
-  if (!date) return "—";
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
+function startOfDay(value = new Date()) {
+  const d = new Date(value);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function addDays(value, days) {
+  const d = new Date(value);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function addHours(value, hours) {
+  const d = new Date(value);
+  d.setHours(d.getHours() + hours);
+  return d;
+}
+
+function formatShortDate(value) {
+  const d = safeDate(value);
+  if (!d) return "—";
+  return d.toLocaleDateString("en-IN", {
+    day: "numeric",
     month: "short",
-    year: "numeric",
   });
 }
 
-function formatShort(value) {
-  const date = parseDate(value);
-  if (!date) return "—";
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-  });
+function formatDue(value) {
+  const d = safeDate(value);
+  if (!d) return "Today";
+  const diffDays = Math.round((startOfDay(d) - startOfDay(new Date())) / MS_DAY);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Tomorrow";
+  if (diffDays > 1 && diffDays <= 6) return `In ${diffDays} days`;
+  if (diffDays < 0) return `${Math.abs(diffDays)}d overdue`;
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
-function formatRelative(value) {
-  const date = parseDate(value);
-  if (!date) return "Not scheduled";
-  const today = startOfDay(new Date());
-  const target = startOfDay(date);
-  const days = diffDays(target, today);
-
-  if (days === 0) return "Today";
-  if (days === 1) return "Tomorrow";
-  if (days === -1) return "Yesterday";
-  if (days > 1 && days <= 6) return `In ${days} days`;
-  if (days < -1 && days >= -6) return `${Math.abs(days)} days overdue`;
-  return formatDate(value);
-}
-
-function normalizeDifficulty(value) {
-  return DIFFICULTIES.includes(value) ? value : "Medium";
-}
-
-function normalizeType(value) {
-  return TYPES.includes(value) ? value : "Theory";
-}
-
-function normalizeSubject(value) {
-  return SUBJECTS.includes(value) ? value : "Other";
-}
-
-function initialInterval(difficulty) {
-  if (difficulty === "Hard") return 1;
-  if (difficulty === "Easy") return 2;
-  return 1;
-}
-
-function initialMastery(difficulty) {
-  if (difficulty === "Hard") return 28;
-  if (difficulty === "Easy") return 40;
-  return 34;
-}
-
-function ratingLabel(value) {
-  return RATINGS.find((rating) => rating.value === value)?.label || "Okay";
-}
-
-function ratingEmoji(value) {
-  return RATINGS.find((rating) => rating.value === value)?.emoji || "🙂";
-}
-
-function normalizeHistoryEntry(entry) {
-  const rating = Number(entry?.rating) || 3;
-  return {
-    id: entry?.id || makeId(),
-    at: entry?.at || new Date().toISOString(),
-    rating,
-    ratingLabel: entry?.ratingLabel || ratingLabel(rating),
-    recall: entry?.recall || "",
-    note: entry?.note || "",
-    nextDueAt: entry?.nextDueAt || null,
-    intervalDays: Number(entry?.intervalDays) || 1,
-    mastery: Number(entry?.mastery) || 0,
-    mode: entry?.mode || "Theory",
-  };
-}
-
-function normalizeTopic(topic) {
-  const difficulty = normalizeDifficulty(topic?.difficulty);
-  const baseInterval = Number(topic?.intervalDays);
-  const nextDueAt = topic?.nextDueAt || new Date().toISOString();
-
-  return {
-    id: String(topic?.id || makeId()),
-    title: topic?.title?.trim() || "Untitled topic",
-    subject: normalizeSubject(topic?.subject),
-    type: normalizeType(topic?.type),
-    difficulty,
-    mastery: clamp(
-      Number(topic?.mastery ?? initialMastery(difficulty)),
-      0,
-      100,
-    ),
-    intervalDays:
-      Number.isFinite(baseInterval) && baseInterval > 0
-        ? baseInterval
-        : initialInterval(difficulty),
-    nextDueAt,
-    lastReviewedAt: topic?.lastReviewedAt || null,
-    lastRating: Number(topic?.lastRating) || null,
-    note: topic?.note || "",
-    createdAt: topic?.createdAt || new Date().toISOString(),
-    history: Array.isArray(topic?.history)
-      ? topic.history.map(normalizeHistoryEntry)
-      : [],
-  };
+function formatInterval(days) {
+  if (!Number.isFinite(days)) return "—";
+  if (days < 1) return "12h";
+  if (days === 1) return "1 day";
+  return `${days} days`;
 }
 
 function loadTopics() {
@@ -187,410 +98,454 @@ function loadTopics() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.map(normalizeTopic) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) => normalizeTopic(item))
+      .filter(Boolean);
   } catch {
     return [];
   }
 }
 
-function priorityScore(topic) {
-  const now = new Date();
-  const dueDate = parseDate(topic.nextDueAt) || now;
-  const lastReviewed = parseDate(topic.lastReviewedAt);
-  const overdue = Math.max(0, diffDays(now, dueDate));
-  const dueSoon = Math.max(0, diffDays(dueDate, now));
-  const staleDays = lastReviewed ? Math.max(0, diffDays(now, lastReviewed)) : 21;
-  const mastery = clamp(Number(topic.mastery) || 0, 0, 100);
+function normalizeTopic(raw) {
+  if (!raw || typeof raw !== "object") return null;
 
-  const typeWeight =
-    topic.type === "Numerical" ? 1.16 : topic.type === "Mixed" ? 1.08 : 1;
-  const difficultyWeight =
-    topic.difficulty === "Hard" ? 1.15 : topic.difficulty === "Easy" ? 0.9 : 1;
+  const topic = String(raw.topic ?? raw.title ?? "").trim();
+  if (!topic) return null;
 
-  let score =
-    overdue * 42 +
-    staleDays * 2.2 +
-    (100 - mastery) * 0.85 +
-    (topic.note ? 4 : 0);
+  const subject = String(raw.subject ?? "").trim() || "General";
+  const type = TYPE_OPTIONS.includes(raw.type) ? raw.type : "Theory";
+  const note = String(raw.note ?? "").trim();
 
-  if (dueSoon === 0) score += 14;
-  if (dueSoon <= 2) score += 8;
-  if (topic.history.length === 0) score += 18;
-
-  score *= typeWeight * difficultyWeight;
-  return Math.round(score);
-}
-
-function computeFocusLimit(count) {
-  if (count <= 0) return 0;
-  if (count <= 3) return count;
-  if (count <= 6) return 3;
-  if (count <= 10) return 4;
-  return 5;
-}
-
-function getDueState(topic) {
-  const now = new Date();
-  const dueDate = parseDate(topic.nextDueAt) || now;
-  const delta = diffDays(dueDate, now);
-
-  if (delta < 0) return "Overdue";
-  if (delta === 0) return "Today";
-  if (delta <= 7) return "This Week";
-  return "Later";
-}
-
-function visibilityFilter(topic, filter) {
-  const state = getDueState(topic);
-  switch (filter) {
-    case "Focus":
-      return true;
-    case "Due Now":
-      return state === "Overdue" || state === "Today";
-    case "Overdue":
-      return state === "Overdue";
-    case "Today":
-      return state === "Today";
-    case "This Week":
-      return state === "Overdue" || state === "Today" || state === "This Week";
-    case "All":
-      return true;
-    case "Theory":
-    case "Numerical":
-    case "Mixed":
-      return topic.type === filter;
-    default:
-      return true;
-  }
-}
-
-function matchesSearch(topic, query) {
-  if (!query) return true;
-  const haystack = [
-    topic.title,
-    topic.subject,
-    topic.type,
-    topic.difficulty,
-    topic.note,
-    ...(topic.history || []).map(
-      (entry) => `${entry.recall} ${entry.note} ${entry.ratingLabel}`,
-    ),
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  return haystack.includes(query.toLowerCase());
-}
-
-function sessionInstruction(topic) {
-  if (topic.type === "Numerical") {
-    return "Pick one medium/high question, solve without help, then try once more before checking the solution.";
-  }
-  if (topic.type === "Mixed") {
-    return "Do one recall round and one problem round. Only then check what you missed.";
-  }
-  return "Close the notes first. Write or speak everything you remember, then compare with NCERT/your notes.";
-}
-
-function evolveTopic(topic, rating, recallText, sessionNote) {
-  const now = new Date();
-  const baseInterval = Number(topic.intervalDays) || initialInterval(topic.difficulty);
-  const ratingStep =
-    {
-      1: { mastery: -18, scale: 1.0, floor: 1 },
-      2: { mastery: -8, scale: 1.2, floor: 1 },
-      3: { mastery: 5, scale: 1.6, floor: 1 },
-      4: { mastery: 11, scale: 2.3, floor: 2 },
-      5: { mastery: 16, scale: 3.1, floor: 3 },
-    }[rating] || { mastery: 0, scale: 1.2, floor: 1 };
-
-  const difficultyBias =
-    topic.difficulty === "Hard" ? 0.92 : topic.difficulty === "Easy" ? 1.08 : 1;
-  const typeBias =
-    topic.type === "Numerical" ? 0.95 : topic.type === "Mixed" ? 1 : 1.05;
-
-  let nextInterval = Math.max(
-    ratingStep.floor,
-    Math.round(baseInterval * ratingStep.scale * difficultyBias * typeBias),
-  );
-
-  if (rating === 1) nextInterval = 1;
-  if (rating === 2) nextInterval = Math.max(1, Math.min(nextInterval, baseInterval + 1));
-
-  const mastery = clamp(
-    (Number(topic.mastery) || 0) + ratingStep.mastery + (topic.history.length === 0 ? 4 : 0),
-    0,
-    100,
-  );
-
-  const nextDueAt = addDays(now, nextInterval).toISOString();
-
-  const historyEntry = {
-    id: makeId(),
-    at: now.toISOString(),
-    rating,
-    ratingLabel: ratingLabel(rating),
-    recall: recallText.trim(),
-    note: sessionNote.trim(),
-    nextDueAt,
-    intervalDays: nextInterval,
-    mastery,
-    mode: topic.type,
-  };
+  const createdAt = raw.createdAt || new Date().toISOString();
+  const updatedAt = raw.updatedAt || createdAt;
+  const lastRevisedAt = raw.lastRevisedAt || null;
+  const nextDueAt = raw.nextDueAt || createdAt;
 
   return {
-    ...topic,
-    mastery,
-    intervalDays: nextInterval,
+    id: String(raw.id ?? makeId()),
+    topic,
+    subject,
+    type,
+    note,
+    confidence: clamp(Number(raw.confidence ?? 35), 0, 100),
+    intervalDays: Number.isFinite(Number(raw.intervalDays))
+      ? Number(raw.intervalDays)
+      : 0,
+    streak: Number.isFinite(Number(raw.streak)) ? Number(raw.streak) : 0,
+    failures: Number.isFinite(Number(raw.failures)) ? Number(raw.failures) : 0,
+    lastResult: String(raw.lastResult ?? ""),
+    createdAt,
+    updatedAt,
+    lastRevisedAt,
     nextDueAt,
-    lastReviewedAt: now.toISOString(),
-    lastRating: rating,
-    note: sessionNote.trim() || topic.note,
-    history: [historyEntry, ...topic.history].slice(0, 20),
+    history: Array.isArray(raw.history) ? raw.history : [],
   };
 }
 
-function buildEmptyEditor() {
-  return { ...NEW_TOPIC };
+function daysUntilDue(topic) {
+  const due = safeDate(topic.nextDueAt)?.getTime() ?? Date.now();
+  return (due - Date.now()) / MS_DAY;
+}
+
+function priorityBand(topic) {
+  const d = daysUntilDue(topic);
+  const confidence = Number(topic.confidence ?? 35);
+
+  if (d <= 0 || confidence < 45) return "High";
+  if (d <= 3 || confidence < 70) return "Medium";
+  return "Low";
+}
+
+function priorityScore(topic) {
+  const d = daysUntilDue(topic);
+  const confidence = Number(topic.confidence ?? 35);
+  const interval = Number(topic.intervalDays ?? 0);
+  const failures = Number(topic.failures ?? 0);
+  const streak = Number(topic.streak ?? 0);
+
+  let score = 0;
+
+  if (d <= -3) score += 120 + Math.min(50, Math.abs(d) * 12);
+  else if (d <= 0) score += 95 + Math.min(35, Math.abs(d) * 10);
+  else if (d <= 1) score += 72;
+  else if (d <= 3) score += 48;
+  else if (d <= 7) score += 24;
+
+  score += (100 - confidence) * 0.8;
+  score += Math.max(0, 8 - interval) * 2.5;
+  score += failures * 12;
+  score -= streak * 2;
+  score += topic.note ? 2 : 0;
+  score += Math.min(4, topic.history?.length || 0);
+
+  return score;
+}
+
+function stageCopy(type) {
+  if (type === "Numerical") {
+    return [
+      {
+        title: "Solve first",
+        text: "Pick a medium or hard question and try it without help.",
+        cta: "I tried to solve it",
+      },
+      {
+        title: "Retry before checking",
+        text: "If you were wrong, solve it again once before seeing the answer.",
+        cta: "I retried",
+      },
+      {
+        title: "Rate it",
+        text: "Judge how much came back before help.",
+        cta: "",
+      },
+    ];
+  }
+
+  if (type === "Mixed") {
+    return [
+      {
+        title: "Recall first",
+        text: "Bring back the concept from memory, then move to a medium or hard question.",
+        cta: "I started",
+      },
+      {
+        title: "Check and retry",
+        text: "Compare, fix mistakes, and try the weak parts again.",
+        cta: "I checked",
+      },
+      {
+        title: "Rate it",
+        text: "Judge the recall before any help changed it.",
+        cta: "",
+      },
+    ];
+  }
+
+  return [
+    {
+      title: "Recall first",
+      text: "Close your notes. Write everything you remember from memory.",
+      cta: "I tried to recall it",
+    },
+    {
+      title: "Check the gaps",
+      text: "Compare with NCERT or your notes. Mark only what you missed.",
+      cta: "I checked",
+    },
+    {
+      title: "Rate it",
+      text: "Judge how much came back before any help.",
+      cta: "",
+    },
+  ];
 }
 
 export default function Rev() {
   const [topics, setTopics] = useState(() => loadTopics());
-  const [filter, setFilter] = useState("Focus");
+  const [activeFilter, setActiveFilter] = useState("Focus");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState(null);
 
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editorId, setEditorId] = useState(null);
-  const [editorDraft, setEditorDraft] = useState(buildEmptyEditor());
+  const [editingId, setEditingId] = useState(null);
+  const [showFormNote, setShowFormNote] = useState(false);
+  const [draft, setDraft] = useState(EMPTY_FORM);
 
-  const [sessionId, setSessionId] = useState(null);
-  const [sessionStep, setSessionStep] = useState("intro");
-  const [sessionRecall, setSessionRecall] = useState("");
+  const [sessionTopicId, setSessionTopicId] = useState(null);
+  const [sessionStep, setSessionStep] = useState(0);
   const [sessionNote, setSessionNote] = useState("");
-  const [sessionRating, setSessionRating] = useState(0);
-
-  const [noteDraft, setNoteDraft] = useState("");
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(topics));
   }, [topics]);
 
-  const visibleTopics = useMemo(() => {
-    return topics
-      .filter((topic) => visibilityFilter(topic, filter))
-      .filter((topic) => matchesSearch(topic, search))
-      .sort((a, b) => priorityScore(b) - priorityScore(a));
-  }, [topics, filter, search]);
-
-  const focusTopics = useMemo(() => {
-    const focusCandidates = topics
-      .filter((topic) => matchesSearch(topic, search))
-      .sort((a, b) => priorityScore(b) - priorityScore(a));
-
-    const limit = computeFocusLimit(focusCandidates.length);
-    return focusCandidates.slice(0, limit);
-  }, [topics, search]);
-
-  const selectedTopic = useMemo(() => {
-    return topics.find((topic) => topic.id === selectedId) || null;
+  useEffect(() => {
+    if (selectedId && !topics.some((topic) => topic.id === selectedId)) {
+      setSelectedId(null);
+    }
   }, [topics, selectedId]);
 
   useEffect(() => {
-    if (visibleTopics.length === 0) {
-      if (selectedId !== null) setSelectedId(null);
-      return;
+    if (sessionTopicId && !topics.some((topic) => topic.id === sessionTopicId)) {
+      closeSession();
     }
+  }, [topics, sessionTopicId]);
 
-    if (!selectedId || !visibleTopics.some((topic) => topic.id === selectedId)) {
-      setSelectedId(visibleTopics[0].id);
-    }
-  }, [visibleTopics, selectedId]);
+  const selectedTopic = topics.find((topic) => topic.id === selectedId) || null;
+  const sessionTopic = topics.find((topic) => topic.id === sessionTopicId) || null;
 
-  useEffect(() => {
-    setNoteDraft(selectedTopic?.note || "");
-  }, [selectedTopic?.id]);
+  const filteredTopics = useMemo(() => {
+    const q = search.trim().toLowerCase();
 
-  const sessionTopic = useMemo(() => {
-    return topics.find((topic) => topic.id === sessionId) || null;
-  }, [topics, sessionId]);
+    const matchesSearch = (topic) => {
+      if (!q) return true;
+      const haystack = [
+        topic.topic,
+        topic.subject,
+        topic.type,
+        topic.note,
+        topic.lastResult,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    };
 
-  const activeFilterCount = visibleTopics.length;
-  const currentSectionLabel = filter === "Focus" ? "Focus" : filter;
+    const matchesFilter = (topic) => {
+      const d = daysUntilDue(topic);
+      const dueDate = safeDate(topic.nextDueAt);
 
-  function openEditor(topic = null) {
-    if (topic) {
-      setEditorId(topic.id);
-      setEditorDraft({
-        title: topic.title || "",
-        subject: topic.subject || "Maths",
-        type: topic.type || "Theory",
-        difficulty: topic.difficulty || "Medium",
-        note: topic.note || "",
-      });
-    } else {
-      setEditorId(null);
-      setEditorDraft(buildEmptyEditor());
-    }
-    setEditorOpen(true);
+      switch (activeFilter) {
+        case "Focus":
+          return true;
+        case "Due Now":
+          return d <= 1;
+        case "Overdue":
+          return d < 0;
+        case "Today":
+          return dueDate && startOfDay(dueDate).getTime() === startOfDay().getTime();
+        case "This Week":
+          return d <= 7;
+        case "All":
+          return true;
+        case "Theory":
+        case "Numerical":
+        case "Mixed":
+          return topic.type === activeFilter;
+        default:
+          return true;
+      }
+    };
+
+    const list = topics.filter((topic) => matchesSearch(topic) && matchesFilter(topic));
+    list.sort((a, b) => priorityScore(b) - priorityScore(a) || a.topic.localeCompare(b.topic));
+    return activeFilter === "Focus" ? list.slice(0, 4) : list;
+  }, [topics, activeFilter, search]);
+
+  const visibleCount = filteredTopics.length;
+  const readyCount = filteredTopics.filter((topic) => daysUntilDue(topic) <= 1).length;
+  const totalCount = topics.length;
+
+  function resetForm() {
+    setEditingId(null);
+    setDraft(EMPTY_FORM);
+    setShowFormNote(false);
   }
 
-  function closeEditor() {
-    setEditorOpen(false);
-    setEditorId(null);
+  function openNewTopic() {
+    resetForm();
   }
 
-  function saveEditor(event) {
-    event.preventDefault();
+  function openEditTopic(topic) {
+    setEditingId(topic.id);
+    setDraft({
+      topic: topic.topic,
+      subject: topic.subject,
+      type: topic.type,
+      note: topic.note || "",
+    });
+    setShowFormNote(Boolean(topic.note));
+  }
 
-    const title = editorDraft.title.trim();
-    if (!title) return;
+  function handleSaveTopic(e) {
+    e.preventDefault();
+
+    const topicName = draft.topic.trim();
+    if (!topicName) return;
+
+    const now = new Date().toISOString();
 
     setTopics((prev) => {
-      if (editorId) {
-        return prev.map((topic) => {
-          if (topic.id !== editorId) return topic;
-          return {
-            ...topic,
-            title,
-            subject: editorDraft.subject,
-            type: editorDraft.type,
-            difficulty: editorDraft.difficulty,
-            note: editorDraft.note.trim(),
-          };
-        });
+      if (editingId) {
+        return prev.map((topic) =>
+          topic.id === editingId
+            ? {
+                ...topic,
+                topic: topicName,
+                subject: draft.subject.trim() || "General",
+                type: draft.type,
+                note: draft.note.trim(),
+                updatedAt: now,
+              }
+            : topic
+        );
       }
 
-      const createdAt = new Date().toISOString();
-      const nextTopic = normalizeTopic({
+      const fresh = {
         id: makeId(),
-        title,
-        subject: editorDraft.subject,
-        type: editorDraft.type,
-        difficulty: editorDraft.difficulty,
-        mastery: initialMastery(editorDraft.difficulty),
-        intervalDays: initialInterval(editorDraft.difficulty),
-        nextDueAt: createdAt,
-        lastReviewedAt: null,
-        note: editorDraft.note.trim(),
-        createdAt,
+        topic: topicName,
+        subject: draft.subject.trim() || "General",
+        type: draft.type,
+        note: draft.note.trim(),
+        confidence: 35,
+        intervalDays: 0,
+        streak: 0,
+        failures: 0,
+        lastResult: "",
+        createdAt: now,
+        updatedAt: now,
+        lastRevisedAt: null,
+        nextDueAt: now,
         history: [],
-      });
+      };
 
-      return [nextTopic, ...prev];
+      return [fresh, ...prev];
     });
 
-    closeEditor();
-  }
-
-  function deleteTopic(id) {
-    const topic = topics.find((item) => item.id === id);
-    if (!topic) return;
-
-    const ok = window.confirm(`Delete "${topic.title}"?`);
-    if (!ok) return;
-
-    setTopics((prev) => prev.filter((item) => item.id !== id));
-    if (selectedId === id) setSelectedId(null);
-    if (sessionId === id) {
-      setSessionId(null);
-      setSessionStep("intro");
-      setSessionRecall("");
-      setSessionNote("");
-      setSessionRating(0);
+    if (!editingId) {
+      setSelectedId(null);
     }
+
+    resetForm();
   }
 
-  function startSession(topic) {
-    if (!topic) return;
-    setSelectedId(topic.id);
-    setSessionId(topic.id);
-    setSessionStep("intro");
-    setSessionRecall("");
-    setSessionNote(topic.note || "");
-    setSessionRating(0);
+  function handleDeleteTopic(topicId) {
+    setTopics((prev) => prev.filter((topic) => topic.id !== topicId));
+    if (selectedId === topicId) setSelectedId(null);
+    if (sessionTopicId === topicId) closeSession();
+  }
+
+  function startSession(topicId) {
+    setSelectedId(topicId);
+    setSessionTopicId(topicId);
+    setSessionStep(0);
+    setSessionNote("");
   }
 
   function closeSession() {
-    setSessionId(null);
-    setSessionStep("intro");
-    setSessionRecall("");
+    setSessionTopicId(null);
+    setSessionStep(0);
     setSessionNote("");
-    setSessionRating(0);
   }
 
-  function finishSession() {
-    if (!sessionTopic || !sessionRating) return;
-
-    const evolved = evolveTopic(
-      sessionTopic,
-      sessionRating,
-      sessionRecall,
-      sessionNote,
-    );
-
-    setTopics((prev) =>
-      prev.map((topic) => (topic.id === sessionTopic.id ? evolved : topic)),
-    );
-
-    if (evolved.note) setNoteDraft(evolved.note);
-    closeSession();
+  function advanceSession() {
+    setSessionStep((prev) => Math.min(2, prev + 1));
   }
 
-  function saveNote() {
-    if (!selectedTopic) return;
+  function finishSession(ratingValue) {
+    if (!sessionTopic) return;
+
+    const picked = RATINGS.find((item) => item.value === ratingValue);
+    const now = new Date();
+    const base = Math.max(1, Number(sessionTopic.intervalDays || 1));
+
+    let nextIntervalDays = 1;
+    let confidenceDelta = 0;
+    let streakDelta = 0;
+    let failureDelta = 0;
+
+    switch (ratingValue) {
+      case 0:
+        nextIntervalDays = 0.5;
+        confidenceDelta = -18;
+        failureDelta = 1;
+        streakDelta = 0;
+        break;
+      case 1:
+        nextIntervalDays = Math.max(1, Math.round(base * 1.1));
+        confidenceDelta = -8;
+        failureDelta = 1;
+        streakDelta = 0;
+        break;
+      case 2:
+        nextIntervalDays = Math.max(2, Math.round(base * 1.8));
+        confidenceDelta = 0;
+        streakDelta = 1;
+        break;
+      case 3:
+        nextIntervalDays = Math.max(4, Math.round(base * 2.5));
+        confidenceDelta = 8;
+        streakDelta = 2;
+        break;
+      case 4:
+        nextIntervalDays = Math.max(7, Math.round(base * 3.2));
+        confidenceDelta = 12;
+        streakDelta = 3;
+        break;
+      default:
+        break;
+    }
+
+    const nextDueAt =
+      ratingValue === 0 ? addHours(now, 12) : addDays(now, nextIntervalDays);
+
+    const historyEntry = {
+      id: makeId(),
+      date: now.toISOString(),
+      rating: picked?.label || "Medium",
+      note: sessionNote.trim(),
+      confidenceBefore: sessionTopic.confidence ?? 35,
+      confidenceAfter: clamp((sessionTopic.confidence ?? 35) + confidenceDelta, 0, 100),
+      intervalDays: nextIntervalDays,
+      type: sessionTopic.type,
+    };
 
     setTopics((prev) =>
       prev.map((topic) =>
-        topic.id === selectedTopic.id
-          ? { ...topic, note: noteDraft.trim() }
-          : topic,
-      ),
+        topic.id === sessionTopic.id
+          ? {
+              ...topic,
+              confidence: clamp(
+                (topic.confidence ?? 35) + confidenceDelta,
+                0,
+                100
+              ),
+              intervalDays: nextIntervalDays,
+              streak: ratingValue <= 1 ? 0 : (topic.streak ?? 0) + streakDelta,
+              failures: (topic.failures ?? 0) + failureDelta,
+              lastResult: picked?.label || "Medium",
+              lastRevisedAt: now.toISOString(),
+              nextDueAt: nextDueAt.toISOString(),
+              note: sessionNote.trim() || topic.note,
+              updatedAt: now.toISOString(),
+              history: [...(topic.history || []), historyEntry],
+            }
+          : topic
+      )
     );
+
+    closeSession();
   }
 
-  const selectedHistory = selectedTopic?.history || [];
+  const sessionStages = stageCopy(sessionTopic?.type || "Theory");
+
+  const selectedHistory = (selectedTopic?.history || []).slice().reverse().slice(0, 6);
 
   return (
-    <div id="Rev" className="app">
+    <div className="app" id="Rev">
       <aside id="optPanel">
-        <div className="revSideHead">
-          <p className="revEyebrow">Tell Me What, When, Where</p>
-          <h2>Revision</h2>
-          <p className="revSideSub">Recall first. Read only to repair gaps.</p>
-        </div>
-
-        <div className="revSideActions">
-          <button className="revAddBtn" type="button" onClick={() => openEditor()}>
-            + Add Topic
+        <div className="revBrand">
+          <button className="revCount" type="button" onClick={openNewTopic}>
+            {totalCount} topics
           </button>
-          <span className="revCount">{topics.length} topics</span>
         </div>
 
-        <div className="revFilterGroup">
-          {SECTIONS.map((section) => (
-            <button
-              key={section}
-              type="button"
-              className={`option ${filter === section ? "active" : ""}`}
-              onClick={() => setFilter(section)}
-            >
-              {section}
-            </button>
-          ))}
-        </div>
+        {FILTERS.map((filter) => (
+          <button
+            key={filter}
+            className={`option ${activeFilter === filter ? "active" : ""}`}
+            onClick={() => setActiveFilter(filter)}
+            type="button"
+          >
+            {filter}
+          </button>
+        ))}
       </aside>
 
       <main id="revMain">
-        <div className="revHeader">
-          <div className="revTitleBlock">
-            <h1>Do this now!</h1>
-            <p>
-              Try hard first. Check second. Store only what matters.
-            </p>
+        <header className="revHeader">
+          <div className="revHeaderTop">
+            <h2>{activeFilter}</h2>
+            <div className="revBadges">
+              <span className="revBadge">
+                {activeFilter === "Focus" ? `${readyCount} ready` : `${visibleCount} shown`}
+              </span>
+              <span className="revBadge">{totalCount} total</span>
+            </div>
           </div>
 
-          <div className="revSearchWrap">
+          <div className="revSearchRow">
             <input
               className="revSearch"
               type="search"
@@ -598,502 +553,290 @@ export default function Rev() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <button
-              className="revGhostBtn"
-              type="button"
-              onClick={() => setSearch("")}
-              disabled={!search}
-            >
-              Clear
-            </button>
           </div>
-        </div>
+        </header>
 
-        {sessionTopic ? (
-          <section className="revPanel revFocusPanel">
-            <div className="revPanelHead">
-              <div>
-                <h3>Focus Session</h3>
-                <p>{sessionInstruction(sessionTopic)}</p>
-              </div>
-              <div className="revPills">
-                <span className="revPill">{sessionTopic.type}</span>
-                <span className="revPill">{sessionTopic.difficulty}</span>
-                <span className="revPill">{formatRelative(sessionTopic.nextDueAt)}</span>
-              </div>
-            </div>
-
-            <div className="revSessionCard">
-              <div className="revSessionTop">
+        <section className="revFeed">
+          {sessionTopic && (
+            <section className="sessionPanel">
+              <div className="sessionHead">
                 <div>
-                  <h2>{sessionTopic.title}</h2>
-                  <p>{sessionTopic.subject}</p>
+                  <div className="sessionKicker">Session</div>
+                  <h3>{sessionTopic.topic}</h3>
+                  <p>
+                    {sessionTopic.subject} · {sessionTopic.type}
+                  </p>
                 </div>
-                <button className="revGhostBtn" type="button" onClick={closeSession}>
-                  Stop
+                <button className="sessionClose" type="button" onClick={closeSession}>
+                  ×
                 </button>
               </div>
 
-              <div className="revSteps">
-                <span className={sessionStep === "intro" ? "step active" : "step"}>1</span>
-                <span className={sessionStep === "recall" ? "step active" : "step"}>2</span>
-                <span className={sessionStep === "rate" ? "step active" : "step"}>3</span>
-                <span className={sessionStep === "note" ? "step active" : "step"}>4</span>
+              <div className="sessionStepper">
+                {sessionStages.map((item, index) => (
+                  <span
+                    key={item.title}
+                    className={`sessionDot ${sessionStep >= index ? "active" : ""}`}
+                  />
+                ))}
               </div>
 
-              {sessionStep === "intro" && (
-                <div className="revSessionBody">
-                  <div className="revTipBox">
-                    <strong>Rule:</strong> do not peek early.
-                    <p>
-                      For theory, write everything you remember.
-                      For numericals, pick one medium/high question and try again if you fail.
-                    </p>
-                  </div>
+              <div className="sessionBody">
+                <h4>{sessionStages[sessionStep].title}</h4>
+                <p>{sessionStages[sessionStep].text}</p>
 
+                {sessionStep < 2 ? (
                   <button
-                    className="revPrimaryBtn"
+                    className="sessionPrimary"
                     type="button"
-                    onClick={() => setSessionStep("recall")}
+                    onClick={advanceSession}
                   >
-                    Start Recall
+                    {sessionStages[sessionStep].cta}
                   </button>
-                </div>
-              )}
+                ) : (
+                  <>
+                    <div className="sessionRatings">
+                      {RATINGS.map((item) => (
+                        <button
+                          key={item.label}
+                          className="ratingBtn"
+                          type="button"
+                          onClick={() => finishSession(item.value)}
+                        >
+                          <span className="ratingEmoji">{item.emoji}</span>
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
 
-              {sessionStep === "recall" && (
-                <div className="revSessionBody">
-                  <label className="revFieldLabel" htmlFor="revRecall">
-                    What did you remember / where did you get stuck?
-                  </label>
-                  <textarea
-                    id="revRecall"
-                    className="revTextarea"
-                    value={sessionRecall}
-                    onChange={(e) => setSessionRecall(e.target.value)}
-                    placeholder="Write the gist of what you recalled, or the problem step where you got stuck."
-                  />
+                    <textarea
+                      className="sessionNote"
+                      value={sessionNote}
+                      onChange={(e) => setSessionNote(e.target.value)}
+                      placeholder="Optional note for next time..."
+                    />
+                  </>
+                )}
+              </div>
+            </section>
+          )}
 
-                  <div className="revSessionActions">
-                    <button
-                      className="revGhostBtn"
-                      type="button"
-                      onClick={() => setSessionStep("intro")}
-                    >
-                      Back
-                    </button>
-                    <button
-                      className="revPrimaryBtn"
-                      type="button"
-                      onClick={() => setSessionStep("rate")}
-                    >
-                      I checked / retried
-                    </button>
-                  </div>
-                </div>
-              )}
+          <section className="revList">
+            {filteredTopics.length === 0 ? (
+              <div className="emptyState">
+                <strong>No topics yet.</strong>
+                <span>Add one below to start the queue.</span>
+              </div>
+            ) : (
+              filteredTopics.map((topic) => {
+                const selected = selectedId === topic.id;
+                const band = priorityBand(topic);
+                const bandClass =
+                  band === "High" ? "high" : band === "Medium" ? "medium" : "low";
+                const confidence = Math.round(topic.confidence ?? 35);
 
-              {sessionStep === "rate" && (
-                <div className="revSessionBody">
-                  <p className="revQuestion">How did it go after checking?</p>
-                  <div className="revRatingRow">
-                    {RATINGS.map((rating) => (
-                      <button
-                        key={rating.value}
-                        type="button"
-                        className={`revRatingBtn ${
-                          sessionRating === rating.value ? "active" : ""
-                        }`}
-                        onClick={() => {
-                          setSessionRating(rating.value);
-                          setSessionStep("note");
-                        }}
-                      >
-                        <span>{rating.emoji}</span>
-                        <strong>{rating.label}</strong>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="revSessionActions">
-                    <button
-                      className="revGhostBtn"
-                      type="button"
-                      onClick={() => setSessionStep("recall")}
-                    >
-                      Back
-                    </button>
-                  </div>
-                </div>
-              )}
+                return (
+                  <button
+                    key={topic.id}
+                    type="button"
+                    className={`revTopicCard ${selected ? "active" : ""}`}
+                    onClick={() => setSelectedId(topic.id)}
+                  >
+                    <div className="revTopicMain">
+                      <div className="revTopicTop">
+                        <span className={`priorityTag ${bandClass}`}>{band}</span>
+                        <span className="revArrow">
+                          {band === "High" ? "↑" : band === "Medium" ? "—" : "↓"}
+                        </span>
+                      </div>
 
-              {sessionStep === "note" && (
-                <div className="revSessionBody">
-                  <label className="revFieldLabel" htmlFor="revNote">
-                    Optional note / hint for next time
-                  </label>
-                  <textarea
-                    id="revNote"
-                    className="revTextarea"
-                    value={sessionNote}
-                    onChange={(e) => setSessionNote(e.target.value)}
-                    placeholder="Example: weak on diagrams, revise examples first, or medium-high questions only."
-                  />
-                  <div className="revSessionActions">
-                    <button
-                      className="revGhostBtn"
-                      type="button"
-                      onClick={() => setSessionStep("rate")}
-                    >
-                      Back
-                    </button>
-                    <button
-                      className="revPrimaryBtn"
-                      type="button"
-                      onClick={finishSession}
-                      disabled={!sessionRating}
-                    >
-                      Complete Revision
-                    </button>
-                  </div>
-                </div>
+                      <h3>{topic.topic}</h3>
+                      <div className="revSubject">{topic.subject}</div>
+
+                      <div className="revMeta">
+                        <span>Due: {formatDue(topic.nextDueAt)}</span>
+                        <span>Last: {formatShortDate(topic.lastRevisedAt)}</span>
+                      </div>
+                    </div>
+
+                    <div className="revConfidence">
+                      <span>{confidence}%</span>
+                      <small>Confidence</small>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </section>
+        </section>
+
+        <form className="revForm" onSubmit={handleSaveTopic}>
+          <div className="revFormTop">
+            <input
+              className="revInput"
+              type="text"
+              placeholder="Add a topic..."
+              value={draft.topic}
+              onChange={(e) => setDraft((prev) => ({ ...prev, topic: e.target.value }))}
+            />
+
+            <input
+              className="revInput"
+              type="text"
+              placeholder="Subject"
+              value={draft.subject}
+              onChange={(e) => setDraft((prev) => ({ ...prev, subject: e.target.value }))}
+            />
+
+            <button className="revSave" type="submit">
+              {editingId ? "Save" : "Add"}
+            </button>
+          </div>
+
+          <div className="revFormMiddle">
+            <div className="typeGroup">
+              {TYPE_OPTIONS.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  className={`typeBtn ${draft.type === type ? "active" : ""}`}
+                  onClick={() => setDraft((prev) => ({ ...prev, type }))}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+
+            <div className="formTools">
+              <button
+                className={`toolBtn ${showFormNote ? "active" : ""}`}
+                type="button"
+                onClick={() => setShowFormNote((prev) => !prev)}
+              >
+                Note
+              </button>
+
+              {editingId && (
+                <button className="toolBtn danger" type="button" onClick={resetForm}>
+                  New
+                </button>
               )}
             </div>
-          </section>
-        ) : (
-          <>
-            <section className="revPanel revFocusPanel">
-              <div className="revPanelHead">
-                <div>
-                  <h3>Focus</h3>
-                  <p>Top priority topics. Do these now.</p>
-                </div>
-                <div className="revPills">
-                  <span className="revPill">{focusTopics.length} ready</span>
-                  <span className="revPill">{topics.length} total</span>
-                </div>
-              </div>
+          </div>
 
-              <div className="revCardList">
-                {focusTopics.length > 0 ? (
-                  focusTopics.map((topic) => (
-                    <button
-                      key={topic.id}
-                      type="button"
-                      className={`revTopicCard ${
-                        selectedTopic?.id === topic.id ? "selected" : ""
-                      }`}
-                      onClick={() => setSelectedId(topic.id)}
-                    >
-                      <div className="revTopicTop">
-                        <div>
-                          <h4>{topic.title}</h4>
-                          <p>
-                            {topic.subject} • {topic.type} • {topic.difficulty}
-                          </p>
-                        </div>
-                        <span className="revBadge">{formatRelative(topic.nextDueAt)}</span>
-                      </div>
-                      <div className="revTopicMeta">
-                        <span>Mastery {Math.round(topic.mastery)}%</span>
-                        <span>Next {formatShort(topic.nextDueAt)}</span>
-                        <span>{topic.history.length} sessions</span>
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <div className="revEmptyState">
-                    <h4>No priority topics.</h4>
-                    <p>Add a topic to start the queue.</p>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className="revPanel revQueuePanel">
-              <div className="revPanelHead">
-                <div>
-                  <h3>{currentSectionLabel}</h3>
-                  <p>{activeFilterCount} topics visible</p>
-                </div>
-                <div className="revPills">
-                  <span className="revPill">Search aware</span>
-                  <span className="revPill">Adaptive</span>
-                </div>
-              </div>
-
-              <div className="revQueueGrid">
-                {visibleTopics.length > 0 ? (
-                  visibleTopics.map((topic) => {
-                    const dueState = getDueState(topic);
-                    return (
-                      <button
-                        key={topic.id}
-                        type="button"
-                        className={`revQueueCard ${
-                          selectedTopic?.id === topic.id ? "selected" : ""
-                        }`}
-                        onClick={() => setSelectedId(topic.id)}
-                      >
-                        <div className="revTopicTop">
-                          <div>
-                            <h4>{topic.title}</h4>
-                            <p>
-                              {topic.subject} • {topic.type} • {topic.difficulty}
-                            </p>
-                          </div>
-                          <span className={`revBadge state-${dueState.replace(/\s/g, "")}`}>
-                            {dueState}
-                          </span>
-                        </div>
-                        <div className="revTopicMeta">
-                          <span>Mastery {Math.round(topic.mastery)}%</span>
-                          <span>Interval {topic.intervalDays}d</span>
-                          <span>{formatRelative(topic.nextDueAt)}</span>
-                        </div>
-                      </button>
-                    );
-                  })
-                ) : (
-                  <div className="revEmptyState">
-                    <h4>No topics here.</h4>
-                    <p>Try another filter or search term.</p>
-                  </div>
-                )}
-              </div>
-            </section>
-          </>
-        )}
+          {showFormNote && (
+            <textarea
+              className="revNote"
+              value={draft.note}
+              onChange={(e) => setDraft((prev) => ({ ...prev, note: e.target.value }))}
+              placeholder="Hint / reminder for next time..."
+            />
+          )}
+        </form>
       </main>
 
       <aside id="revSide">
-        <section className="revPanel revSidePanel">
-          <div className="revPanelHead side">
+        <section className="detailCard">
+          <div className="detailHead">
             <div>
-              <h3>{selectedTopic ? selectedTopic.title : "Topic details"}</h3>
-              <p>{selectedTopic ? "Everything about the topic" : "Select a topic to inspect it."}</p>
+              <h3>Topic details</h3>
+              <p>Everything about the selected topic.</p>
             </div>
-            <div className="revSideButtons">
+
+            <div className="detailActions">
               <button
-                className="revGhostBtn"
+                className="detailBtn"
                 type="button"
-                onClick={() => openEditor(selectedTopic)}
                 disabled={!selectedTopic}
+                onClick={() => selectedTopic && openEditTopic(selectedTopic)}
               >
                 Edit
               </button>
               <button
-                className="revGhostBtn danger"
+                className="detailBtn danger"
                 type="button"
-                onClick={() => deleteTopic(selectedTopic?.id)}
                 disabled={!selectedTopic}
+                onClick={() => selectedTopic && handleDeleteTopic(selectedTopic.id)}
               >
                 Delete
               </button>
             </div>
           </div>
 
-          {selectedTopic ? (
+          {!selectedTopic ? (
+            <div className="detailEmpty">
+              <strong>No topic selected.</strong>
+              <span>Add something or click a topic.</span>
+            </div>
+          ) : (
             <>
-              <div className="revDetailGrid">
-                <div className="revDetailItem">
-                  <span>Subject</span>
-                  <strong>{selectedTopic.subject}</strong>
-                </div>
-                <div className="revDetailItem">
-                  <span>Type</span>
-                  <strong>{selectedTopic.type}</strong>
-                </div>
-                <div className="revDetailItem">
-                  <span>Difficulty</span>
-                  <strong>{selectedTopic.difficulty}</strong>
-                </div>
-                <div className="revDetailItem">
-                  <span>Mastery</span>
-                  <strong>{Math.round(selectedTopic.mastery)}%</strong>
-                </div>
-                <div className="revDetailItem">
-                  <span>Last revised</span>
-                  <strong>
-                    {selectedTopic.lastReviewedAt ? formatDate(selectedTopic.lastReviewedAt) : "Never"}
-                  </strong>
-                </div>
-                <div className="revDetailItem">
-                  <span>Next due</span>
-                  <strong>{formatRelative(selectedTopic.nextDueAt)}</strong>
-                </div>
-              </div>
-
-              <div className="revNoteBlock">
-                <div className="revNoteHead">
-                  <h4>Note for next time</h4>
-                  <span className="revSmallHint">Optional hint / memory cue</span>
-                </div>
-                <textarea
-                  className="revTextarea compact"
-                  value={noteDraft}
-                  onChange={(e) => setNoteDraft(e.target.value)}
-                  placeholder="Example: weak at diagrams, revise examples first, or solve medium questions before hard."
-                />
-                <div className="revSessionActions">
-                  <button className="revGhostBtn" type="button" onClick={() => setNoteDraft(selectedTopic.note || "")}>
-                    Reset
-                  </button>
-                  <button className="revPrimaryBtn" type="button" onClick={saveNote}>
-                    Save Note
-                  </button>
-                </div>
-              </div>
-
-              <div className="revHistoryBlock">
-                <div className="revNoteHead">
-                  <h4>History</h4>
-                  <span className="revSmallHint">{selectedHistory.length} entries</span>
+              <div className="detailHero">
+                <h2>{selectedTopic.topic}</h2>
+                <div className="detailPills">
+                  <span className="detailPill">{selectedTopic.subject}</span>
+                  <span className="detailPill">{selectedTopic.type}</span>
                 </div>
 
-                <div className="revHistoryList">
-                  {selectedHistory.length > 0 ? (
-                    selectedHistory.map((entry) => (
-                      <div key={entry.id} className="revHistoryItem">
-                        <div className="revHistoryTop">
-                          <strong>
-                            {ratingEmoji(entry.rating)} {entry.ratingLabel}
-                          </strong>
-                          <span>{formatDate(entry.at)}</span>
-                        </div>
-                        <p>
-                          Next due: {formatRelative(entry.nextDueAt)} • Interval {entry.intervalDays}d • Mastery {Math.round(entry.mastery)}%
-                        </p>
-                        {(entry.recall || entry.note) && (
-                          <div className="revHistoryNote">
-                            {entry.recall && <p><strong>Recall:</strong> {entry.recall}</p>}
-                            {entry.note && <p><strong>Note:</strong> {entry.note}</p>}
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="revEmptyState small">
-                      <h4>No history yet.</h4>
-                      <p>Run one revision session to begin the timeline.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="revPrimaryStrip">
                 <button
-                  className="revPrimaryBtn wide"
+                  className="detailStart"
                   type="button"
-                  onClick={() => startSession(selectedTopic)}
+                  onClick={() => startSession(selectedTopic.id)}
                 >
-                  Start Revision
+                  {sessionTopicId === selectedTopic.id ? "Resume Session" : "Start Revision"}
                 </button>
               </div>
+
+              <div className="detailGrid">
+                <div className="detailStat">
+                  <span>Confidence</span>
+                  <strong>{Math.round(selectedTopic.confidence ?? 35)}%</strong>
+                </div>
+                <div className="detailStat">
+                  <span>Interval</span>
+                  <strong>{formatInterval(selectedTopic.intervalDays || 0)}</strong>
+                </div>
+                <div className="detailStat">
+                  <span>Next due</span>
+                  <strong>{formatDue(selectedTopic.nextDueAt)}</strong>
+                </div>
+                <div className="detailStat">
+                  <span>Revisions</span>
+                  <strong>{selectedTopic.history?.length || 0}</strong>
+                </div>
+              </div>
+
+              {selectedTopic.note && (
+                <div className="detailNote">
+                  <span>Hint</span>
+                  <p>{selectedTopic.note}</p>
+                </div>
+              )}
             </>
+          )}
+        </section>
+
+        <section className="historyCard">
+          <h3>History</h3>
+
+          {!selectedTopic ? (
+            <div className="historyEmpty">Select a topic to view history.</div>
+          ) : selectedHistory.length === 0 ? (
+            <div className="historyEmpty">No revisions yet.</div>
           ) : (
-            <div className="revEmptyState large">
-              <h4>No topic selected.</h4>
-              <p>Add something. Then the app can start thinking for you.</p>
+            <div className="historyList">
+              {selectedHistory.map((item) => (
+                <div key={item.id} className="historyItem">
+                  <div className="historyTop">
+                    <strong>{item.rating}</strong>
+                    <span>{formatShortDate(item.date)}</span>
+                  </div>
+                  {item.note ? <p>{item.note}</p> : <p>No note.</p>}
+                </div>
+              ))}
             </div>
           )}
         </section>
       </aside>
-
-      {editorOpen && (
-        <div className="revModalBackdrop" onClick={closeEditor}>
-          <form
-            className="revModal"
-            onClick={(e) => e.stopPropagation()}
-            onSubmit={saveEditor}
-          >
-            <div className="revModalHead">
-              <div>
-                <h3>{editorId ? "Edit Topic" : "Add Topic"}</h3>
-                <p>One topic only. No book chapters. No clutter.</p>
-              </div>
-              <button type="button" className="revGhostBtn" onClick={closeEditor}>
-                Close
-              </button>
-            </div>
-
-            <label className="revFieldLabel">
-              Topic name
-              <input
-                className="revInput"
-                value={editorDraft.title}
-                onChange={(e) => setEditorDraft((prev) => ({ ...prev, title: e.target.value }))}
-                placeholder="E.g. Trigonometry"
-              />
-            </label>
-
-            <div className="revFormGrid">
-              <label className="revFieldLabel">
-                Subject
-                <select
-                  className="revInput"
-                  value={editorDraft.subject}
-                  onChange={(e) => setEditorDraft((prev) => ({ ...prev, subject: e.target.value }))}
-                >
-                  {SUBJECTS.map((subject) => (
-                    <option key={subject} value={subject}>
-                      {subject}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="revFieldLabel">
-                Type
-                <select
-                  className="revInput"
-                  value={editorDraft.type}
-                  onChange={(e) => setEditorDraft((prev) => ({ ...prev, type: e.target.value }))}
-                >
-                  {TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="revFieldLabel">
-                Difficulty
-                <select
-                  className="revInput"
-                  value={editorDraft.difficulty}
-                  onChange={(e) => setEditorDraft((prev) => ({ ...prev, difficulty: e.target.value }))}
-                >
-                  {DIFFICULTIES.map((difficulty) => (
-                    <option key={difficulty} value={difficulty}>
-                      {difficulty}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="revFieldLabel">
-                Short note / hint
-                <input
-                  className="revInput"
-                  value={editorDraft.note}
-                  onChange={(e) => setEditorDraft((prev) => ({ ...prev, note: e.target.value }))}
-                  placeholder="Optional cue for next time"
-                />
-              </label>
-            </div>
-
-            <div className="revModalActions">
-              <button type="button" className="revGhostBtn" onClick={closeEditor}>
-                Cancel
-              </button>
-              <button type="submit" className="revPrimaryBtn">
-                Save Topic
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 }
