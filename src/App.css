@@ -13,7 +13,7 @@ html, body, h1, h2, h3, h4, h5, h6, p, div, section, aside, article, main, foote
   display: flex;
   justify-content: center;
 
-  background: url('/src/images/leaves-wallpaper-1920x1080-botanical-verdant-25003.jpg') no-repeat;
+  background: url('/src/assets/leaves-wallpaper-1920x1080-botanical-verdant-25003.jpg') no-repeat;
   background-size: cover;
   filter: saturate(140%);
   -webkit-filter: saturate(140%);
@@ -127,7 +127,7 @@ html, body, h1, h2, h3, h4, h5, h6, p, div, section, aside, article, main, foote
   line-height: 0;
   user-select: none;
   -moz-user-select: none;
-  font-family: 'Segoe Script', 'Script';
+  font-family: 'Playwrite', 'Segoe Script', 'Script';
   transition: 500ms;
   z-index: 20;
 
@@ -148,7 +148,7 @@ html, body, h1, h2, h3, h4, h5, h6, p, div, section, aside, article, main, foote
   position: absolute;
   text-align: center;
   -webkit-text-fill-color: rgba(255, 255, 255, 0.15);
-  font-family: 'OCR A', 'Poppins', 'Century Gothic', monospace;
+  /* font-family: 'OCR A', 'Poppins', 'Century Gothic', monospace; */
 }
 
 

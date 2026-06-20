@@ -82,12 +82,11 @@ export default function App() {
   }
 
   return (
-    <>
     <section id="body">
       {visible && (
         <div className="welcome" onClick={handleCloseWel} style={{ transform: closing ? 'translateY(-150%)' : 'none' }}>
           <h1>Welcome</h1>
-          <p>ProDesk X10</p>
+          <p>ProDesk-X10 by Deep Projects</p>
         </div>
       )}
       
@@ -182,6 +181,7 @@ export default function App() {
         </div>
         <div className="settings app" id="settings">
           <button id="FS" onClick={handleCloseWel}>Fullscreen</button>
+          Settings is NOT complete yet.
         </div>
       </div>}
 
@@ -200,6 +200,5 @@ export default function App() {
         <button className="icon" onClick={() => {setOpenSet(true);}} data-name="Settings">⚙</button>
       </div>
     </section>
-    </>
   )
 }

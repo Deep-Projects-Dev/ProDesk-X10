@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import './guide.css';
 
+const genGuide = [
+  "To be Written...", "We will complete it ASAP."
+]
+
 export default function Guide() {
   const [filter, setFilter] = useState('General')
   
@@ -18,6 +22,10 @@ export default function Guide() {
         <div id="gRight">
           <h1>Welcome to ProDesk X10.</h1>
           <h2>Specially designed for CBSE class 10 students.</h2>
+          <span className="space" />
+          {genGuide.map((gl, index) => {
+            <h4 key={index}>{gl}</h4>
+          })}
         </div>
       </div>
     </>
