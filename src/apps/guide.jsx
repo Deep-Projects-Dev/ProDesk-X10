@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './guide.css';
+import '../class.css';
 
 const genGuide = [
   "To be Written...", "We will complete it ASAP."
@@ -20,7 +21,7 @@ export default function Guide() {
           ))}
         </div> 
         <div id="gRight">
-          <h1>Welcome to ProDesk X10.</h1>
+          <h1 className='pw'>Welcome to <b>ProDesk X10</b>, a Deep Projects Product.</h1>
           <h2>Specially designed for CBSE class 10 students.</h2>
           <span className="space" />
           {genGuide.map((gl, index) => {
